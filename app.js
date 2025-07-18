@@ -1,9 +1,10 @@
 import { auth, db } from './firebase.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Elementos da UI ---
 const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn'); // Novo botão
 const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const userPhotoImg = document.getElementById('user-photo');
@@ -50,11 +51,18 @@ loginBtn.addEventListener('click', () => {
     signInWithPopup(auth, provider).catch(error => console.error("Erro no login:", error));
 });
 
+// NOVO: Evento de clique para o botão de logout
+logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    signOut(auth).catch(error => console.error("Erro ao deslogar:", error));
+});
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         loginBtn.classList.add('hidden');
         userInfoDiv.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden'); // Mostra o botão de logout
         userNameSpan.textContent = user.displayName;
         userPhotoImg.src = user.photoURL;
         profileLink.href = `perfil.html?uid=${user.uid}`;
@@ -66,6 +74,7 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = null;
         loginBtn.classList.remove('hidden');
         userInfoDiv.classList.add('hidden');
+        logoutBtn.classList.add('hidden'); // Esconde o botão de logout
         adminLink.classList.add('hidden');
         profileLink.classList.add('hidden');
         difficultySelection.classList.add('hidden');
@@ -74,26 +83,36 @@ onAuthStateChanged(auth, async (user) => {
 
 async function saveUserToFirestore(user) {
     const userRef = doc(db, 'usuarios', user.uid);
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) {
-        await setDoc(userRef, {
-            uid: user.uid,
-            nome: user.displayName,
-            email: user.email,
-            fotoURL: user.photoURL,
-            admin: false,
-            bio: "Novo no Quiz Bíblico!",
-            stats: { pontuacaoTotal: 0, quizzesJogados: 0, respostasCertas: 0, respostasErradas: 0 },
-            conquistas: []
-        });
-    } else {
-        // CORREÇÃO APLICADA AQUI:
-        // Usar setDoc com merge: true é mais seguro para atualizações.
-        // Ele atualiza os campos ou os cria se não existirem, sem apagar o resto do documento.
-        await setDoc(userRef, {
-            nome: user.displayName,
-            fotoURL: user.photoURL
-        }, { merge: true });
+    try {
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                nome: user.displayName || "Jogador Anônimo",
+                email: user.email,
+                fotoURL: user.photoURL || "https://placehold.co/150x150/e0e0e0/333?text=?",
+                admin: false,
+                bio: "Novo no Quiz Bíblico!",
+                stats: { pontuacaoTotal: 0, quizzesJogados: 0, respostasCertas: 0, respostasErradas: 0 },
+                conquistas: []
+            });
+        } else {
+            // CORREÇÃO APLICADA AQUI:
+            // Cria um objeto apenas com os dados que realmente existem para evitar enviar 'null'
+            const updateData = {};
+            if (user.displayName) {
+                updateData.nome = user.displayName;
+            }
+            if (user.photoURL) {
+                updateData.fotoURL = user.photoURL;
+            }
+            // Só atualiza se houver dados para atualizar
+            if (Object.keys(updateData).length > 0) {
+                await setDoc(userRef, updateData, { merge: true });
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao salvar usuário no Firestore:", error);
     }
 }
 
