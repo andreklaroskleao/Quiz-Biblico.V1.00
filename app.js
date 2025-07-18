@@ -128,7 +128,7 @@ async function checkAdminStatus(uid) {
 // --- Lógica de Grupos ---
 async function loadUserGroups(uid) {
     groupsList.innerHTML = '<p>Carregando...</p>';
-    const q = query(collection(db, "grupos"), where(`membros.${uid}.uid`, "==", uid));
+    const q = query(collection(db, "grupos"), where("memberUIDs", "array-contains", uid));
     try {
         const querySnapshot = await getDocs(q);
         groupsList.innerHTML = '';
@@ -142,7 +142,7 @@ async function loadUserGroups(uid) {
             groupElement.className = 'group-item';
             groupElement.innerHTML = `
                 <span>${group.nomeDoGrupo}</span>
-                <span class="member-count">${Object.keys(group.membros).length} membros</span>
+                <span class="member-count">${group.memberUIDs.length} membros</span>
             `;
             groupsList.appendChild(groupElement);
         });
@@ -180,9 +180,9 @@ saveGroupBtn.addEventListener('click', async () => {
             criadorUid: currentUser.uid,
             criadorNome: currentUser.displayName,
             dataCriacao: serverTimestamp(),
+            memberUIDs: [currentUser.uid],
             membros: {
                 [currentUser.uid]: {
-                    uid: currentUser.uid,
                     nome: currentUser.displayName,
                     fotoURL: currentUser.photoURL,
                     pontuacaoNoGrupo: 0
