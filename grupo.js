@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Elementos da UI ---
 const loadingDiv = document.getElementById('loading-group');
@@ -59,7 +59,6 @@ function displayGroupData() {
     groupNameH2.textContent = groupData.nomeDoGrupo;
     groupCreatorSpan.textContent = groupData.criadorNome;
 
-    // Converte o mapa de membros em um array e ordena pelo score
     const members = Object.values(groupData.membros).sort((a, b) => b.pontuacaoNoGrupo - a.pontuacaoNoGrupo);
 
     rankingTbody.innerHTML = '';
@@ -86,7 +85,7 @@ function updateActionButtons() {
         return;
     }
 
-    const isMember = groupData.membros.hasOwnProperty(currentUser.uid);
+    const isMember = groupData.memberUIDs.includes(currentUser.uid);
 
     if (isMember) {
         const inviteBtn = document.createElement('button');
@@ -112,19 +111,18 @@ async function joinGroup() {
 
     const groupRef = doc(db, 'grupos', groupId);
     const newMemberData = {
-        uid: currentUser.uid,
-        nome: currentUser.displayName,
-        fotoURL: currentUser.photoURL,
+        nome: currentUser.displayName || "Jogador Anônimo",
+        fotoURL: currentUser.photoURL || "https://placehold.co/40x40",
         pontuacaoNoGrupo: 0
     };
 
     try {
-        // Usamos a notação de ponto para atualizar um campo específico em um mapa
         await updateDoc(groupRef, {
-            [`membros.${currentUser.uid}`]: newMemberData
+            [`membros.${currentUser.uid}`]: newMemberData,
+            memberUIDs: arrayUnion(currentUser.uid)
         });
         alert('Você entrou no grupo!');
-        loadGroupData(); // Recarrega os dados para mostrar o novo membro
+        loadGroupData();
     } catch (error) {
         console.error("Erro ao entrar no grupo:", error);
         alert("Não foi possível entrar no grupo.");
