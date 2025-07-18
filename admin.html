@@ -14,6 +14,7 @@
         </header>
         
         <main id="admin-content" class="hidden">
+            <!-- Formulários de Gerenciamento (sem alterações) -->
             <div class="admin-form">
                 <h3>Gerenciamento em Massa</h3>
                 <label for="import-file">Importar perguntas de arquivo JSON:</label>
@@ -49,12 +50,15 @@
             </div>
 
             <h2>Perguntas Cadastradas</h2>
-            <table id="questions-table">
-                <thead>
-                    <tr><th>Enunciado</th><th>Nível</th><th>Ações</th></tr>
-                </thead>
-                <tbody id="questions-tbody"></tbody>
-            </table>
+            <!-- NOVO: Container da tabela para rolagem -->
+            <div class="table-container">
+                <table id="questions-table">
+                    <thead>
+                        <tr><th>Enunciado</th><th>Nível</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody id="questions-tbody"></tbody>
+                </table>
+            </div>
         </main>
         <div id="auth-guard-message"><h2>Verificando permissões...</h2></div>
     </div>
