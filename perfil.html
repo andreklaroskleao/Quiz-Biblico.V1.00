@@ -1,76 +1,150 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil do Jogador</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+import { auth, db } from './firebase.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    <div id="profile-container" class="container" style="max-width: 800px;">
-        <div id="loading-profile">
-            <h2>Carregando perfil...</h2>
-        </div>
+// --- Elementos da UI ---
+const loadingDiv = document.getElementById('loading-profile');
+const contentDiv = document.getElementById('profile-content');
+const notFoundDiv = document.getElementById('profile-not-found');
 
-        <div id="profile-content" class="hidden">
-            <a href="/index.html" class="back-link">← Voltar ao Início</a>
-            <header class="profile-header">
-                <img id="profile-photo" src="https://placehold.co/150x150/e0e0e0/333?text=?" alt="Foto do Perfil">
-                <div class="profile-info">
-                    <h2 id="profile-name">Nome do Jogador</h2>
-                    <p id="profile-bio">Carregando bio...</p>
-                    <button id="edit-bio-btn" class="btn btn-small hidden">Editar Bio</button>
-                </div>
-            </header>
+const profilePhoto = document.getElementById('profile-photo');
+const profileName = document.getElementById('profile-name');
+const profileBio = document.getElementById('profile-bio');
+const editBioBtn = document.getElementById('edit-bio-btn');
 
-            <section class="profile-stats">
-                <h3>Estatísticas</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h4>Pontuação Total</h4>
-                        <p id="stat-score">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Quizzes Jogados</h4>
-                        <p id="stat-quizzes">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Respostas Certas</h4>
-                        <p id="stat-correct">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Taxa de Acerto</h4>
-                        <p id="stat-accuracy">0%</p>
-                    </div>
-                </div>
-            </section>
+const statScore = document.getElementById('stat-score');
+const statQuizzes = document.getElementById('stat-quizzes');
+const statCorrect = document.getElementById('stat-correct');
+const statAccuracy = document.getElementById('stat-accuracy'); // Nova estatística
+const achievementsGrid = document.getElementById('achievements-grid');
 
-            <section class="profile-achievements">
-                <h3>Conquistas</h3>
-                <div id="achievements-grid" class="achievements-grid">
-                    <!-- Conquistas serão inseridas aqui pelo JS -->
-                </div>
-            </section>
-        </div>
+// Modal de Edição
+const editBioModal = document.getElementById('edit-bio-modal');
+const bioTextarea = document.getElementById('bio-textarea');
+const saveBioBtn = document.getElementById('save-bio-btn');
+const cancelBioBtn = document.getElementById('cancel-bio-btn');
 
-        <div id="profile-not-found" class="hidden">
-            <h2>Perfil não encontrado</h2>
-            <p>O jogador que você está procurando não existe.</p>
-            <a href="/index.html" class="btn">Voltar ao Início</a>
-        </div>
-    </div>
+let currentUser = null;
+let profileUid = null;
+
+// Definição das conquistas
+const allAchievements = {
+    'iniciante_da_fe': { title: 'Iniciante da Fé', description: 'Completou o primeiro quiz.', icon: '📖' },
+    'erudito_aprendiz': { title: 'Erudito Aprendiz', description: 'Alcançou 1.000 pontos.', icon: '📜' },
+    'peregrino_fiel': { title: 'Peregrino Fiel', description: 'Jogou 10 quizzes.', icon: '👣' },
+    'sabio_de_israel': { title: 'Sábio de Israel', description: 'Alcançou 5.000 pontos.', icon: '👑' },
+    'mestre_da_palavra': { title: 'Mestre da Palavra', description: 'Acertou 100 perguntas.', icon: '✒️' }
+};
+
+// --- Lógica Principal ---
+window.addEventListener('DOMContentLoaded', async () => {
+    const params = new URLSearchParams(window.location.search);
+    profileUid = params.get('uid');
+
+    if (!profileUid) {
+        showNotFound();
+        return;
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if (currentUser && currentUser.uid === profileUid) {
+            editBioBtn.classList.remove('hidden');
+        }
+    });
+
+    await loadProfileData();
+});
+
+async function loadProfileData() {
+    try {
+        const userRef = doc(db, 'usuarios', profileUid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+            displayProfileData(userDoc.data());
+            loadingDiv.classList.add('hidden');
+            contentDiv.classList.remove('hidden');
+        } else {
+            showNotFound();
+        }
+    } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+        showNotFound();
+    }
+}
+
+function displayProfileData(data) {
+    profilePhoto.src = data.fotoURL || 'https://placehold.co/150x150/e0e0e0/333?text=?';
+    profileName.textContent = data.nome || 'Jogador Anônimo';
+    profileBio.textContent = data.bio || '';
+
+    const stats = data.stats || {};
+    const totalCertas = stats.respostasCertas || 0;
+    const totalErradas = stats.respostasErradas || 0;
+    const totalRespostas = totalCertas + totalErradas;
+    const accuracy = totalRespostas > 0 ? ((totalCertas / totalRespostas) * 100).toFixed(0) : 0;
+
+    statScore.textContent = stats.pontuacaoTotal || 0;
+    statQuizzes.textContent = stats.quizzesJogados || 0;
+    statCorrect.textContent = totalCertas;
+    statAccuracy.textContent = `${accuracy}%`;
+
+    achievementsGrid.innerHTML = '';
+    const userAchievements = new Set(data.conquistas || []);
     
-    <!-- Modal de Edição de Bio -->
-    <div id="edit-bio-modal" class="modal">
-        <div class="modal-content">
-            <h3>Editar sua Biografia</h3>
-            <textarea id="bio-textarea" rows="4" maxlength="150"></textarea>
-            <button id="save-bio-btn" class="btn">Salvar</button>
-            <button id="cancel-bio-btn" class="btn btn-secondary">Cancelar</button>
-        </div>
-    </div>
+    Object.keys(allAchievements).forEach(key => {
+        const achievement = allAchievements[key];
+        const isUnlocked = userAchievements.has(key);
+        
+        const achievElement = document.createElement('div');
+        achievElement.classList.add('achievement-badge');
+        if (!isUnlocked) {
+            achievElement.classList.add('locked');
+        }
 
-    <script type="module" src="perfil.js"></script>
-</body>
-</html>
+        achievElement.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-info">
+                <h4>${achievement.title}</h4>
+                <p>${achievement.description}</p>
+            </div>
+        `;
+        achievementsGrid.appendChild(achievElement);
+    });
+}
+
+function showNotFound() {
+    loadingDiv.classList.add('hidden');
+    contentDiv.classList.add('hidden');
+    notFoundDiv.classList.remove('hidden');
+}
+
+// --- Lógica do Modal ---
+editBioBtn.addEventListener('click', () => {
+    bioTextarea.value = profileBio.textContent;
+    editBioModal.classList.add('visible');
+});
+
+cancelBioBtn.addEventListener('click', () => {
+    editBioModal.classList.remove('visible');
+});
+
+saveBioBtn.addEventListener('click', async () => {
+    const newBio = bioTextarea.value.trim();
+    saveBioBtn.disabled = true;
+    saveBioBtn.textContent = 'Salvando...';
+
+    try {
+        const userRef = doc(db, 'usuarios', profileUid);
+        await updateDoc(userRef, { bio: newBio });
+        profileBio.textContent = newBio;
+        editBioModal.classList.remove('visible');
+    } catch (error) {
+        console.error("Erro ao salvar a bio:", error);
+        alert("Não foi possível salvar a bio. Tente novamente.");
+    } finally {
+        saveBioBtn.disabled = false;
+        saveBioBtn.textContent = 'Salvar';
+    }
+});
