@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Bíblico Evangélico</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- CABEÇALHO COM LOGIN/INFO DO USUÁRIO -->
+        <header class="header">
+            <h1>Quiz Bíblico</h1>
+            <div id="auth-container">
+                <button id="login-btn" class="btn btn-google">Login com Google</button>
+                <!-- ATUALIZADO: Adicionada a tag <a> com um ID -->
+                <a href="#" id="user-info-anchor" style="text-decoration: none; color: inherit;">
+                    <div id="user-info" class="user-info hidden">
+                        <span id="user-name"></span>
+                        <img id="user-photo" src="" alt="Foto do Usuário">
+                        <a href="/admin.html" id="admin-link" class="hidden">Admin</a>
+                    </div>
+                </a>
+            </div>
+        </header>
+
+        <main>
+            <!-- TELA INICIAL -->
+            <section id="initial-screen">
+                <h2>"A tua palavra é lâmpada para os meus pés e luz para o meu caminho." - Salmos 119:105</h2>
+                <div id="difficulty-selection" class="difficulty-selection hidden">
+                    <h3>Escolha a dificuldade:</h3>
+                    <button class="btn" data-difficulty="facil">Fácil</button>
+                    <button class="btn" data-difficulty="medio">Médio</button>
+                    <button class="btn" data-difficulty="dificil">Difícil</button>
+                </div>
+            </section>
+
+            <!-- TELA DO QUIZ -->
+            <section id="quiz-screen" class="hidden">
+                <div id="quiz-header">
+                    <p>Pontuação: <span id="score">0</span></p>
+                </div>
+                <h3 id="question-text"></h3>
+                <div id="options-container" class="options-container"></div>
+                <div id="feedback-container">
+                    <p id="feedback"></p>
+                    <p id="reference"></p>
+                </div>
+                <button id="next-btn" class="btn hidden">Próxima</button>
+            </section>
+
+            <!-- TELA DE RESULTADO -->
+            <section id="result-screen" class="hidden">
+                <h2>Parabéns!</h2>
+                <p>Sua pontuação final foi:</p>
+                <p id="final-score" style="font-size: 3rem; font-weight: bold;"></p>
+                <div id="motivational-message"></div>
+                <button id="restart-btn" class="btn">Jogar Novamente</button>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração - Quiz Bíblico</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" id="admin-panel" style="max-width: 900px;">
+        <header class="header">
+            <h1>Painel de Administração</h1>
+            <a href="/index.html">Voltar ao Quiz</a>
+        </header>
+        
+        <div id="auth-guard-message">
+            <h2>Verificando permissões...</h2>
+            <p>Você precisa estar logado com uma conta de administrador para ver esta página.</p>
+        </div>
+
+        <main class="hidden" id="admin-content">
+            <!-- Seção de Gerenciamento em Massa -->
+            <div class="admin-form" style="background-color: #e9ecef;">
+                <h3>Gerenciamento em Massa</h3>
+                <p>Exporte todas as perguntas atuais para um arquivo de backup ou importe perguntas de um arquivo JSON.</p>
+                <div>
+                    <button id="export-btn" class="btn" style="background-color: var(--success-color);">Exportar para JSON</button>
+                </div>
+                <hr style="margin: 15px 0;">
+                <div>
+                    <label for="import-file">Importar perguntas de um arquivo JSON:</label>
+                    <input type="file" id="import-file" accept=".json" style="margin-top: 5px; display: block;">
+                    <button id="import-btn" class="btn" style="margin-top: 10px;">Importar Arquivo</button>
+                </div>
+            </div>
+
+            <!-- Formulário para Adicionar/Editar Perguntas -->
+            <div class="admin-form">
+                <h3>Adicionar/Editar Pergunta Individual</h3>
+                <input type="hidden" id="question-id">
+                <input type="text" id="enunciado" placeholder="Enunciado da pergunta">
+                <input type="text" id="alt1" placeholder="Alternativa 1">
+                <input type="text" id="alt2" placeholder="Alternativa 2">
+                <input type="text" id="alt3" placeholder="Alternativa 3">
+                <input type="text" id="alt4" placeholder="Alternativa 4">
+                <select id="correta">
+                    <option value="0">Alternativa 1 é a correta</option>
+                    <option value="1">Alternativa 2 é a correta</option>
+                    <option value="2">Alternativa 3 é a correta</option>
+                    <option value="3">Alternativa 4 é a correta</option>
+                </select>
+                <select id="nivel">
+                    <option value="facil">Fácil</option>
+                    <option value="medio">Médio</option>
+                    <option value="dificil">Difícil</option>
+                </select>
+                <input type="text" id="tema" placeholder="Tema (ex: personagens)">
+                <input type="text" id="referencia" placeholder="Referência (ex: Gênesis 1:1)">
+                <button id="save-question-btn" class="btn">Salvar Pergunta</button>
+                <button id="cancel-edit-btn" class="btn hidden" style="background-color: gray;">Cancelar Edição</button>
+            </div>
+
+            <!-- Tabela de Perguntas -->
+            <h2>Perguntas Cadastradas</h2>
+            <table id="questions-table">
+                <thead>
+                    <tr>
+                        <th>Enunciado</th>
+                        <th>Nível</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="questions-tbody">
+                    <!-- Linhas serão inseridas via JS -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
