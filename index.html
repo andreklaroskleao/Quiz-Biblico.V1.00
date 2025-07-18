@@ -9,12 +9,10 @@
 <body>
 
     <div class="container">
-        <!-- CABEÇALHO COM LOGIN/INFO DO USUÁRIO -->
         <header class="header">
             <h1>Quiz Bíblico</h1>
             <div id="auth-container">
                 <button id="login-btn" class="btn btn-google">Login com Google</button>
-                <!-- ATUALIZADO: Estrutura simplificada e mais clara -->
                 <div id="user-info" class="user-info hidden">
                     <img id="user-photo" src="" alt="Foto do Usuário">
                     <div class="user-details">
@@ -28,9 +26,9 @@
             </div>
         </header>
 
-        <main>
+        <main id="main-content">
             <!-- TELA INICIAL -->
-            <section id="initial-screen">
+            <section id="initial-screen" class="screen">
                 <h2>"A tua palavra é lâmpada para os meus pés e luz para o meu caminho." - Salmos 119:105</h2>
                 <div id="difficulty-selection" class="difficulty-selection hidden">
                     <h3>Escolha a dificuldade:</h3>
@@ -41,9 +39,9 @@
             </section>
 
             <!-- TELA DO QUIZ -->
-            <section id="quiz-screen" class="hidden">
-                <div id="quiz-header">
-                    <p>Pontuação: <span id="score">0</span></p>
+            <section id="quiz-screen" class="screen hidden">
+                <div id="quiz-progress-container">
+                    <div id="quiz-progress-bar"></div>
                 </div>
                 <h3 id="question-text"></h3>
                 <div id="options-container" class="options-container"></div>
@@ -55,10 +53,10 @@
             </section>
 
             <!-- TELA DE RESULTADO -->
-            <section id="result-screen" class="hidden">
+            <section id="result-screen" class="screen hidden">
                 <h2>Parabéns!</h2>
                 <p>Sua pontuação final foi:</p>
-                <p id="final-score" style="font-size: 3rem; font-weight: bold;"></p>
+                <p id="final-score"></p>
                 <div id="motivational-message"></div>
                 <button id="restart-btn" class="btn">Jogar Novamente</button>
             </section>
