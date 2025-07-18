@@ -26,7 +26,29 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-async function loadGroupData() { /* ... (sem alterações) ... */ }
+async function loadGroupData() {
+    loadingDiv.classList.remove('hidden');
+    contentDiv.classList.add('hidden');
+    notFoundDiv.classList.add('hidden');
+
+    try {
+        const groupRef = doc(db, 'grupos', groupId);
+        const groupDoc = await getDoc(groupRef);
+
+        if (groupDoc.exists()) {
+            groupData = groupDoc.data();
+            displayGroupData();
+            contentDiv.classList.remove('hidden');
+        } else {
+            showNotFound();
+        }
+    } catch (error) {
+        console.error("Erro ao carregar grupo:", error);
+        showNotFound();
+    } finally {
+        loadingDiv.classList.add('hidden');
+    }
+}
 
 function displayGroupData() {
     groupNameH2.textContent = groupData.nomeDoGrupo;
@@ -62,12 +84,10 @@ function updateActionButtons() {
     const isMember = groupData.memberUIDs.includes(currentUser.uid);
 
     if (isMember) {
-        // **BOTÃO CORRIGIDO**
         const playBtn = document.createElement('button');
         playBtn.className = 'btn';
         playBtn.innerHTML = '<i class="fas fa-play"></i> Jogar pelo Grupo';
         playBtn.addEventListener('click', () => {
-            // Redireciona para a página inicial com o ID do grupo como parâmetro
             window.location.href = `index.html?groupId=${groupId}`;
         });
         groupActionsDiv.appendChild(playBtn);
@@ -90,5 +110,37 @@ function updateActionButtons() {
     }
 }
 
-async function joinGroup() { /* ... (sem alterações) ... */ }
-function showNotFound() { /* ... (sem alterações) ... */ }
+async function joinGroup() {
+    if (!currentUser || !groupData) return;
+    const joinBtn = groupActionsDiv.querySelector('button');
+    joinBtn.disabled = true;
+    joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+
+    const groupRef = doc(db, 'grupos', groupId);
+    const newMemberData = {
+        nome: currentUser.displayName || "Jogador Anônimo",
+        fotoURL: currentUser.photoURL || "https://placehold.co/40x40",
+        pontuacaoNoGrupo: 0
+    };
+
+    try {
+        await updateDoc(groupRef, {
+            [`membros.${currentUser.uid}`]: newMemberData,
+            memberUIDs: arrayUnion(currentUser.uid)
+        });
+        // A UI será atualizada automaticamente pela função loadGroupData
+        await loadGroupData();
+    } catch (error) {
+        console.error("Erro ao entrar no grupo:", error);
+        alert("Não foi possível entrar no grupo. Verifique suas permissões de internet ou as regras do Firestore.");
+        // Garante que o botão seja reativado em caso de erro
+        joinBtn.disabled = false;
+        joinBtn.innerHTML = '<i class="fas fa-user-plus"></i> Entrar no Grupo';
+    }
+}
+
+function showNotFound() {
+    loadingDiv.classList.add('hidden');
+    contentDiv.classList.add('hidden');
+    notFoundDiv.classList.remove('hidden');
+}
