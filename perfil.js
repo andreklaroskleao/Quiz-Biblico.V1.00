@@ -15,7 +15,7 @@ const editBioBtn = document.getElementById('edit-bio-btn');
 const statScore = document.getElementById('stat-score');
 const statQuizzes = document.getElementById('stat-quizzes');
 const statCorrect = document.getElementById('stat-correct');
-const statWrong = document.getElementById('stat-wrong');
+const statAccuracy = document.getElementById('stat-accuracy'); // Nova estatística
 const achievementsGrid = document.getElementById('achievements-grid');
 
 // Modal de Edição
@@ -27,18 +27,17 @@ const cancelBioBtn = document.getElementById('cancel-bio-btn');
 let currentUser = null;
 let profileUid = null;
 
-// Definição das conquistas (para exibir nome e descrição)
-const achievementsMap = {
+// Definição das conquistas
+const allAchievements = {
     'iniciante_da_fe': { title: 'Iniciante da Fé', description: 'Completou o primeiro quiz.', icon: '📖' },
-    'erudito_aprendiz': { title: 'Erudito Aprendiz', description: 'Alcançou 1000 pontos.', icon: '📜' },
-    'peregrino_fiel': { title: 'Peregrino Fiel', description: 'Jogou 10 quizzes.', icon: '👣' }
+    'erudito_aprendiz': { title: 'Erudito Aprendiz', description: 'Alcançou 1.000 pontos.', icon: '📜' },
+    'peregrino_fiel': { title: 'Peregrino Fiel', description: 'Jogou 10 quizzes.', icon: '👣' },
+    'sabio_de_israel': { title: 'Sábio de Israel', description: 'Alcançou 5.000 pontos.', icon: '👑' },
+    'mestre_da_palavra': { title: 'Mestre da Palavra', description: 'Acertou 100 perguntas.', icon: '✒️' }
 };
 
 // --- Lógica Principal ---
 window.addEventListener('DOMContentLoaded', async () => {
-    loadingDiv.classList.remove('hidden');
-
-    // Pega o UID da URL
     const params = new URLSearchParams(window.location.search);
     profileUid = params.get('uid');
 
@@ -47,16 +46,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Verifica o usuário atualmente logado
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
-        // Se o usuário logado for o dono do perfil, mostra o botão de editar
         if (currentUser && currentUser.uid === profileUid) {
             editBioBtn.classList.remove('hidden');
         }
     });
 
-    // Carrega os dados do perfil
     await loadProfileData();
 });
 
@@ -66,8 +62,7 @@ async function loadProfileData() {
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-            const userData = userDoc.data();
-            displayProfileData(userData);
+            displayProfileData(userDoc.data());
             loadingDiv.classList.add('hidden');
             contentDiv.classList.remove('hidden');
         } else {
@@ -84,35 +79,39 @@ function displayProfileData(data) {
     profileName.textContent = data.nome || 'Jogador Anônimo';
     profileBio.textContent = data.bio || '';
 
-    // Preenche as estatísticas
     const stats = data.stats || {};
+    const totalCertas = stats.respostasCertas || 0;
+    const totalErradas = stats.respostasErradas || 0;
+    const totalRespostas = totalCertas + totalErradas;
+    const accuracy = totalRespostas > 0 ? ((totalCertas / totalRespostas) * 100).toFixed(0) : 0;
+
     statScore.textContent = stats.pontuacaoTotal || 0;
     statQuizzes.textContent = stats.quizzesJogados || 0;
-    statCorrect.textContent = stats.respostasCertas || 0;
-    statWrong.textContent = stats.respostasErradas || 0;
+    statCorrect.textContent = totalCertas;
+    statAccuracy.textContent = `${accuracy}%`;
 
-    // Preenche as conquistas
     achievementsGrid.innerHTML = '';
-    const userAchievements = data.conquistas || [];
-    if (userAchievements.length === 0) {
-        achievementsGrid.innerHTML = '<p>Nenhuma conquista desbloqueada ainda. Continue jogando!</p>';
-    } else {
-        userAchievements.forEach(achievKey => {
-            const achievement = achievementsMap[achievKey];
-            if (achievement) {
-                const achievElement = document.createElement('div');
-                achievElement.classList.add('achievement-badge');
-                achievElement.innerHTML = `
-                    <div class="achievement-icon">${achievement.icon}</div>
-                    <div class="achievement-info">
-                        <h4>${achievement.title}</h4>
-                        <p>${achievement.description}</p>
-                    </div>
-                `;
-                achievementsGrid.appendChild(achievElement);
-            }
-        });
-    }
+    const userAchievements = new Set(data.conquistas || []);
+    
+    Object.keys(allAchievements).forEach(key => {
+        const achievement = allAchievements[key];
+        const isUnlocked = userAchievements.has(key);
+        
+        const achievElement = document.createElement('div');
+        achievElement.classList.add('achievement-badge');
+        if (!isUnlocked) {
+            achievElement.classList.add('locked');
+        }
+
+        achievElement.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-info">
+                <h4>${achievement.title}</h4>
+                <p>${achievement.description}</p>
+            </div>
+        `;
+        achievementsGrid.appendChild(achievElement);
+    });
 }
 
 function showNotFound() {
@@ -121,28 +120,26 @@ function showNotFound() {
     notFoundDiv.classList.remove('hidden');
 }
 
-// --- Lógica do Modal de Edição de Bio ---
+// --- Lógica do Modal ---
 editBioBtn.addEventListener('click', () => {
     bioTextarea.value = profileBio.textContent;
-    editBioModal.classList.remove('hidden');
+    editBioModal.classList.add('visible');
 });
 
 cancelBioBtn.addEventListener('click', () => {
-    editBioModal.classList.add('hidden');
+    editBioModal.classList.remove('visible');
 });
 
 saveBioBtn.addEventListener('click', async () => {
-    const newBio = bioTextarea.value;
+    const newBio = bioTextarea.value.trim();
     saveBioBtn.disabled = true;
     saveBioBtn.textContent = 'Salvando...';
 
     try {
         const userRef = doc(db, 'usuarios', profileUid);
-        await updateDoc(userRef, {
-            bio: newBio
-        });
+        await updateDoc(userRef, { bio: newBio });
         profileBio.textContent = newBio;
-        editBioModal.classList.add('hidden');
+        editBioModal.classList.remove('visible');
     } catch (error) {
         console.error("Erro ao salvar a bio:", error);
         alert("Não foi possível salvar a bio. Tente novamente.");
