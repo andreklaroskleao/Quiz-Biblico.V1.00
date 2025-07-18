@@ -19,12 +19,7 @@ let groupData = null;
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     groupId = params.get('id');
-
-    if (!groupId) {
-        showNotFound();
-        return;
-    }
-
+    if (!groupId) { showNotFound(); return; }
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         loadGroupData();
@@ -64,8 +59,9 @@ function displayGroupData() {
     rankingTbody.innerHTML = '';
     members.forEach((member, index) => {
         const row = document.createElement('tr');
+        const rankClass = `rank-${index + 1}`;
         row.innerHTML = `
-            <td class="rank">${index + 1}</td>
+            <td class="rank ${rankClass}">${index + 1}</td>
             <td class="member-info">
                 <img src="${member.fotoURL || 'https://placehold.co/40x40'}" alt="Foto de ${member.nome}">
                 <span>${member.nome}</span>
@@ -88,9 +84,17 @@ function updateActionButtons() {
     const isMember = groupData.memberUIDs.includes(currentUser.uid);
 
     if (isMember) {
+        const playBtn = document.createElement('button');
+        playBtn.className = 'btn';
+        playBtn.innerHTML = '<i class="fas fa-play"></i> Jogar pelo Grupo';
+        playBtn.addEventListener('click', () => {
+            window.location.href = `index.html?groupId=${groupId}`;
+        });
+        groupActionsDiv.appendChild(playBtn);
+
         const inviteBtn = document.createElement('button');
-        inviteBtn.className = 'btn';
-        inviteBtn.textContent = 'Convidar Amigos';
+        inviteBtn.className = 'btn btn-secondary';
+        inviteBtn.innerHTML = '<i class="fas fa-share-alt"></i> Convidar Amigos';
         inviteBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(window.location.href)
                 .then(() => alert('Link de convite copiado!'))
@@ -100,7 +104,7 @@ function updateActionButtons() {
     } else {
         const joinBtn = document.createElement('button');
         joinBtn.className = 'btn';
-        joinBtn.textContent = 'Entrar no Grupo';
+        joinBtn.innerHTML = '<i class="fas fa-user-plus"></i> Entrar no Grupo';
         joinBtn.addEventListener('click', joinGroup);
         groupActionsDiv.appendChild(joinBtn);
     }
@@ -108,6 +112,9 @@ function updateActionButtons() {
 
 async function joinGroup() {
     if (!currentUser || !groupData) return;
+    const joinBtn = groupActionsDiv.querySelector('button');
+    joinBtn.disabled = true;
+    joinBtn.textContent = 'Entrando...';
 
     const groupRef = doc(db, 'grupos', groupId);
     const newMemberData = {
@@ -126,6 +133,8 @@ async function joinGroup() {
     } catch (error) {
         console.error("Erro ao entrar no grupo:", error);
         alert("Não foi possível entrar no grupo.");
+        joinBtn.disabled = false;
+        joinBtn.innerHTML = '<i class="fas fa-user-plus"></i> Entrar no Grupo';
     }
 }
 
