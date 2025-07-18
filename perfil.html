@@ -9,7 +9,7 @@
 <body>
 
     <div id="profile-container" class="container" style="max-width: 800px;">
-        <div id="loading-profile" class="hidden">
+        <div id="loading-profile">
             <h2>Carregando perfil...</h2>
         </div>
 
@@ -23,15 +23,6 @@
                     <button id="edit-bio-btn" class="btn btn-small hidden">Editar Bio</button>
                 </div>
             </header>
-
-            <div id="edit-bio-modal" class="modal hidden">
-                <div class="modal-content">
-                    <h3>Editar sua Biografia</h3>
-                    <textarea id="bio-textarea" rows="4" maxlength="150"></textarea>
-                    <button id="save-bio-btn" class="btn">Salvar</button>
-                    <button id="cancel-bio-btn" class="btn btn-secondary">Cancelar</button>
-                </div>
-            </div>
 
             <section class="profile-stats">
                 <h3>Estatísticas</h3>
@@ -49,8 +40,8 @@
                         <p id="stat-correct">0</p>
                     </div>
                     <div class="stat-card">
-                        <h4>Respostas Erradas</h4>
-                        <p id="stat-wrong">0</p>
+                        <h4>Taxa de Acerto</h4>
+                        <p id="stat-accuracy">0%</p>
                     </div>
                 </div>
             </section>
@@ -67,6 +58,16 @@
             <h2>Perfil não encontrado</h2>
             <p>O jogador que você está procurando não existe.</p>
             <a href="/index.html" class="btn">Voltar ao Início</a>
+        </div>
+    </div>
+    
+    <!-- Modal de Edição de Bio -->
+    <div id="edit-bio-modal" class="modal">
+        <div class="modal-content">
+            <h3>Editar sua Biografia</h3>
+            <textarea id="bio-textarea" rows="4" maxlength="150"></textarea>
+            <button id="save-bio-btn" class="btn">Salvar</button>
+            <button id="cancel-bio-btn" class="btn btn-secondary">Cancelar</button>
         </div>
     </div>
 
