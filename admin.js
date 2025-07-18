@@ -2,12 +2,13 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Elementos da UI Admin
-const authGuardMessage = document.getElementById('auth-guard-message');
+// --- Elementos da UI ---
 const adminContent = document.getElementById('admin-content');
+const authGuardMessage = document.getElementById('auth-guard-message');
 const questionsTbody = document.getElementById('questions-tbody');
 
-// Formulário Individual
+// Formulário
+const formTitle = document.getElementById('form-title');
 const saveBtn = document.getElementById('save-question-btn');
 const cancelBtn = document.getElementById('cancel-edit-btn');
 const questionIdInput = document.getElementById('question-id');
@@ -21,12 +22,12 @@ const nivelSelect = document.getElementById('nivel');
 const temaInput = document.getElementById('tema');
 const referenciaInput = document.getElementById('referencia');
 
-// Elementos de Importação/Exportação
+// Import/Export
 const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
 const importFileInput = document.getElementById('import-file');
 
-// --- Proteção de Rota (Auth Guard) ---
+// --- Proteção de Rota ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const userRef = doc(db, 'usuarios', user.uid);
@@ -39,7 +40,7 @@ onAuthStateChanged(auth, async (user) => {
             authGuardMessage.innerHTML = '<h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta página.</p>';
         }
     } else {
-        authGuardMessage.innerHTML = '<h2>Acesso Negado</h2><p>Faça o login como administrador para continuar.</p>';
+        authGuardMessage.innerHTML = '<h2>Acesso Negado</h2><p>Faça login como administrador para continuar.</p>';
     }
 });
 
@@ -47,26 +48,31 @@ onAuthStateChanged(auth, async (user) => {
 
 // Carregar (Read) as perguntas
 async function loadQuestions() {
-    questionsTbody.innerHTML = '<tr><td colspan="3">Carregando perguntas...</td></tr>';
-    const querySnapshot = await getDocs(collection(db, "perguntas"));
-    questionsTbody.innerHTML = ''; // Limpa a mensagem de "carregando"
-    if (querySnapshot.empty) {
-        questionsTbody.innerHTML = '<tr><td colspan="3">Nenhuma pergunta cadastrada.</td></tr>';
-        return;
+    questionsTbody.innerHTML = '<tr><td colspan="3">Carregando...</td></tr>';
+    try {
+        const querySnapshot = await getDocs(collection(db, "perguntas"));
+        if (querySnapshot.empty) {
+            questionsTbody.innerHTML = '<tr><td colspan="3">Nenhuma pergunta cadastrada.</td></tr>';
+            return;
+        }
+        questionsTbody.innerHTML = '';
+        querySnapshot.forEach((doc) => {
+            const question = doc.data();
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${question.enunciado}</td>
+                <td>${question.nivel}</td>
+                <td class="actions-cell">
+                    <button class="btn edit-btn" data-id="${doc.id}">Editar</button>
+                    <button class="btn delete-btn" data-id="${doc.id}" style="background: var(--danger-color);">Excluir</button>
+                </td>
+            `;
+            questionsTbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar perguntas:", error);
+        questionsTbody.innerHTML = '<tr><td colspan="3">Erro ao carregar perguntas.</td></tr>';
     }
-    querySnapshot.forEach((doc) => {
-        const question = doc.data();
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${question.enunciado}</td>
-            <td>${question.nivel}</td>
-            <td>
-                <button class="btn edit-btn" data-id="${doc.id}">Editar</button>
-                <button class="btn delete-btn" data-id="${doc.id}" style="background-color: var(--danger-color);">Excluir</button>
-            </td>
-        `;
-        questionsTbody.appendChild(row);
-    });
 }
 
 // Salvar (Create/Update) pergunta
@@ -74,14 +80,24 @@ saveBtn.addEventListener('click', async () => {
     const questionId = questionIdInput.value;
     
     const questionData = {
-        enunciado: enunciadoInput.value,
-        alternativas: [alt1Input.value, alt2Input.value, alt3Input.value, alt4Input.value],
+        enunciado: enunciadoInput.value.trim(),
+        alternativas: [
+            alt1Input.value.trim(),
+            alt2Input.value.trim(),
+            alt3Input.value.trim(),
+            alt4Input.value.trim()
+        ],
         correta: parseInt(corretaSelect.value),
         nivel: nivelSelect.value,
-        tema: temaInput.value,
-        referencia: referenciaInput.value,
+        tema: temaInput.value.trim().toLowerCase(),
+        referencia: referenciaInput.value.trim(),
         ultimaAtualizacao: serverTimestamp()
     };
+
+    if (!questionData.enunciado || questionData.alternativas.some(alt => !alt)) {
+        alert("Por favor, preencha todos os campos da pergunta e das alternativas.");
+        return;
+    }
 
     try {
         if (questionId) {
@@ -100,7 +116,7 @@ saveBtn.addEventListener('click', async () => {
     }
 });
 
-// Editar e Excluir
+// Lidar com cliques na tabela (Editar e Excluir)
 questionsTbody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.dataset.id;
@@ -110,6 +126,7 @@ questionsTbody.addEventListener('click', async (e) => {
         const docSnap = await getDoc(questionRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
+            formTitle.textContent = 'Editar Pergunta';
             questionIdInput.value = id;
             enunciadoInput.value = data.enunciado;
             [alt1Input.value, alt2Input.value, alt3Input.value, alt4Input.value] = data.alternativas;
@@ -125,17 +142,24 @@ questionsTbody.addEventListener('click', async (e) => {
     }
 
     if (target.classList.contains('delete-btn')) {
-        if (confirm('Tem certeza que deseja excluir esta pergunta?')) {
-            await deleteDoc(doc(db, "perguntas", id));
-            alert('Pergunta excluída com sucesso!');
-            loadQuestions();
+        if (confirm('Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita.')) {
+            try {
+                await deleteDoc(doc(db, "perguntas", id));
+                alert('Pergunta excluída com sucesso!');
+                loadQuestions();
+            } catch (error) {
+                console.error("Erro ao excluir pergunta:", error);
+                alert("Ocorreu um erro ao excluir a pergunta.");
+            }
         }
     }
 });
 
+// Botão de Cancelar Edição
 cancelBtn.addEventListener('click', resetForm);
 
 function resetForm() {
+    formTitle.textContent = 'Adicionar Nova Pergunta';
     questionIdInput.value = '';
     enunciadoInput.value = '';
     alt1Input.value = '';
@@ -150,7 +174,7 @@ function resetForm() {
     cancelBtn.classList.add('hidden');
 }
 
-// --- LÓGICA DE IMPORTAÇÃO E EXPORTAÇÃO ---
+// --- IMPORTAÇÃO E EXPORTAÇÃO ---
 
 // EXPORTAR
 exportBtn.addEventListener('click', async () => {
@@ -173,15 +197,14 @@ exportBtn.addEventListener('click', async () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'perguntas_quiz_biblico.json';
+        a.download = `quiz_biblico_backup_${new Date().toISOString().slice(0,10)}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        alert(`${perguntas.length} perguntas exportadas com sucesso!`);
     } catch (error) {
         console.error("Erro ao exportar perguntas: ", error);
-        alert("Ocorreu um erro ao exportar as perguntas.");
+        alert("Ocorreu um erro ao exportar.");
     }
 });
 
@@ -189,7 +212,7 @@ exportBtn.addEventListener('click', async () => {
 importBtn.addEventListener('click', () => {
     const file = importFileInput.files[0];
     if (!file) {
-        alert("Por favor, selecione um arquivo JSON para importar.");
+        alert("Por favor, selecione um arquivo JSON.");
         return;
     }
 
@@ -198,37 +221,34 @@ importBtn.addEventListener('click', () => {
         try {
             const perguntas = JSON.parse(event.target.result);
             if (!Array.isArray(perguntas) || perguntas.length === 0) {
-                alert("O arquivo JSON é inválido ou está vazio.");
+                alert("Arquivo JSON inválido ou vazio.");
                 return;
             }
 
-            const userConfirmed = confirm(`Você tem certeza que deseja importar ${perguntas.length} perguntas? Esta ação adicionará novas perguntas ao banco de dados.`);
-            if (!userConfirmed) return;
+            if (!confirm(`Deseja importar ${perguntas.length} perguntas?`)) return;
 
             const batch = writeBatch(db);
             const perguntasCollection = collection(db, "perguntas");
             let importedCount = 0;
 
             perguntas.forEach(pergunta => {
-                if (pergunta.enunciado && Array.isArray(pergunta.alternativas) && pergunta.correta !== undefined && pergunta.nivel) {
+                if (pergunta.enunciado && Array.isArray(pergunta.alternativas)) {
                     const newQuestionRef = doc(perguntasCollection);
                     batch.set(newQuestionRef, {
                         ...pergunta,
                         ultimaAtualizacao: serverTimestamp()
                     });
                     importedCount++;
-                } else {
-                    console.warn("Pergunta ignorada por ter formato inválido:", pergunta);
                 }
             });
 
             await batch.commit();
-            alert(`${importedCount} perguntas importadas com sucesso! A lista será atualizada.`);
+            alert(`${importedCount} perguntas importadas com sucesso!`);
             loadQuestions();
-            importFileInput.value = ''; // Limpa o input do arquivo
+            importFileInput.value = '';
         } catch (error) {
-            console.error("Erro ao importar o arquivo: ", error);
-            alert("Ocorreu um erro ao processar o arquivo JSON. Verifique o console para mais detalhes.");
+            console.error("Erro ao importar arquivo: ", error);
+            alert("Erro ao processar o arquivo JSON.");
         }
     };
     reader.readAsText(file);
