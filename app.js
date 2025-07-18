@@ -3,14 +3,14 @@ import { auth, db } from './firebase.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Elementos da UI (sem alterações, mas listados para contexto) ---
+// --- Elementos da UI ---
 const loginBtn = document.getElementById('login-btn');
 const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const userPhotoImg = document.getElementById('user-photo');
 const adminLink = document.getElementById('admin-link');
-// NOVO: Adicionar uma âncora em volta da user-info para o link do perfil
-const userInfoAnchor = document.getElementById('user-info-anchor'); 
+// NOVO: Link explícito para o perfil
+const profileLink = document.getElementById('profile-link'); 
 
 const initialScreen = document.getElementById('initial-screen');
 const difficultySelection = document.getElementById('difficulty-selection');
@@ -52,10 +52,9 @@ onAuthStateChanged(auth, async (user) => {
         userPhotoImg.src = user.photoURL;
         difficultySelection.classList.remove('hidden');
         
-        // ATUALIZADO: Link para o perfil do usuário
-        if(userInfoAnchor) {
-            userInfoAnchor.href = `perfil.html?uid=${user.uid}`;
-        }
+        // ATUALIZADO: Mostra o link do perfil e define o href
+        profileLink.href = `perfil.html?uid=${user.uid}`;
+        profileLink.classList.remove('hidden');
 
         await saveUserToFirestore(user);
         await checkAdminStatus(user.uid);
@@ -65,10 +64,11 @@ onAuthStateChanged(auth, async (user) => {
         userInfoDiv.classList.add('hidden');
         difficultySelection.classList.add('hidden');
         adminLink.classList.add('hidden');
+        // ATUALIZADO: Esconde o link do perfil ao deslogar
+        profileLink.classList.add('hidden');
     }
 });
 
-// ATUALIZADO: Salva o usuário com a nova estrutura de dados
 async function saveUserToFirestore(user) {
     const userRef = doc(db, 'usuarios', user.uid);
     const userDoc = await getDoc(userRef);
@@ -89,7 +89,6 @@ async function saveUserToFirestore(user) {
             conquistas: []
         });
     } else {
-        // Garante que a foto do Google esteja sempre atualizada
         await updateDoc(userRef, {
             fotoURL: user.photoURL,
             nome: user.displayName
@@ -119,7 +118,6 @@ async function startQuiz(difficulty) {
     quizScreen.classList.remove('hidden');
     resultScreen.classList.add('hidden');
     
-    // Reseta contadores
     score = 0;
     correctAnswersCount = 0;
     wrongAnswersCount = 0;
@@ -200,7 +198,6 @@ nextBtn.addEventListener('click', () => {
     displayQuestion();
 });
 
-// ATUALIZADO: Salva estatísticas e verifica conquistas
 async function showResults() {
     quizScreen.classList.add('hidden');
     resultScreen.classList.remove('hidden');
@@ -213,7 +210,6 @@ async function showResults() {
     try {
         const userRef = doc(db, 'usuarios', currentUser.uid);
         
-        // Atualiza estatísticas
         await updateDoc(userRef, {
             "stats.pontuacaoTotal": increment(score),
             "stats.quizzesJogados": increment(1),
@@ -221,7 +217,6 @@ async function showResults() {
             "stats.respostasErradas": increment(wrongAnswersCount)
         });
 
-        // Verifica conquistas
         await checkAndAwardAchievements(userRef);
 
     } catch (error) {
@@ -237,17 +232,14 @@ async function checkAndAwardAchievements(userRef) {
     const userAchievements = new Set(userData.conquistas || []);
     let newAchievements = [];
 
-    // Conquista: Primeiro Quiz
     if (!userAchievements.has("iniciante_da_fe")) {
         newAchievements.push("iniciante_da_fe");
     }
 
-    // Conquista: 1000 pontos
     if (userData.stats.pontuacaoTotal >= 1000 && !userAchievements.has("erudito_aprendiz")) {
         newAchievements.push("erudito_aprendiz");
     }
 
-    // Conquista: 10 quizzes jogados
     if (userData.stats.quizzesJogados >= 10 && !userAchievements.has("peregrino_fiel")) {
         newAchievements.push("peregrino_fiel");
     }
@@ -256,7 +248,6 @@ async function checkAndAwardAchievements(userRef) {
         await updateDoc(userRef, {
             conquistas: arrayUnion(...newAchievements)
         });
-        // Opcional: mostrar um alerta/modal sobre a nova conquista
         alert(`Parabéns! Você desbloqueou ${newAchievements.length} nova(s) conquista(s)!`);
     }
 }
