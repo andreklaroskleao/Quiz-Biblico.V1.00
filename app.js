@@ -87,7 +87,13 @@ async function saveUserToFirestore(user) {
             conquistas: []
         });
     } else {
-        await updateDoc(userRef, { fotoURL: user.photoURL, nome: user.displayName });
+        // CORREÇÃO APLICADA AQUI:
+        // Usar setDoc com merge: true é mais seguro para atualizações.
+        // Ele atualiza os campos ou os cria se não existirem, sem apagar o resto do documento.
+        await setDoc(userRef, {
+            nome: user.displayName,
+            fotoURL: user.photoURL
+        }, { merge: true });
     }
 }
 
