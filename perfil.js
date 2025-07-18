@@ -11,6 +11,7 @@ const profilePhoto = document.getElementById('profile-photo');
 const profileName = document.getElementById('profile-name');
 const profileBio = document.getElementById('profile-bio');
 const editBioBtn = document.getElementById('edit-bio-btn');
+const shareProfileBtn = document.getElementById('share-profile-btn');
 
 const statScore = document.getElementById('stat-score');
 const statQuizzes = document.getElementById('stat-quizzes');
@@ -117,7 +118,7 @@ function showNotFound() {
     notFoundDiv.classList.remove('hidden');
 }
 
-// --- Lógica do Modal ---
+// --- Lógica do Modal e Ações ---
 editBioBtn.addEventListener('click', () => {
     bioTextarea.value = profileBio.textContent;
     editBioModal.classList.add('visible');
@@ -148,4 +149,10 @@ saveBioBtn.addEventListener('click', async () => {
         saveBioBtn.disabled = false;
         saveBioBtn.textContent = 'Salvar';
     }
+});
+
+shareProfileBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('Link do perfil copiado para a área de transferência!'))
+        .catch(() => alert('Não foi possível copiar o link.'));
 });
