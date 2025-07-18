@@ -9,7 +9,21 @@
 <body>
     <div class="container">
         <header class="header">
-            <!-- ... (cabeçalho sem alterações) ... -->
+            <h1>Quiz Bíblico</h1>
+            <div id="auth-container">
+                <button id="login-btn" class="btn btn-google">Login com Google</button>
+                <div id="user-info" class="user-info hidden">
+                    <img id="user-photo" src="" alt="Foto do Usuário">
+                    <div class="user-details">
+                        <span id="user-name"></span>
+                        <div class="user-links">
+                            <a href="#" id="profile-link" class="hidden">Meu Perfil</a>
+                            <a href="/admin.html" id="admin-link" class="hidden">Admin</a>
+                            <a href="#" id="logout-btn" class="hidden">Sair</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <main id="main-content">
@@ -22,7 +36,6 @@
                     <button class="btn" data-difficulty="dificil">Difícil</button>
                 </div>
                 
-                <!-- NOVA SEÇÃO DE GRUPOS -->
                 <div id="groups-container" class="groups-section hidden">
                     <h3>Meus Grupos</h3>
                     <div id="groups-list">
@@ -31,11 +44,30 @@
                     <button id="create-group-btn" class="btn">Criar Novo Grupo</button>
                 </div>
             </section>
-            <!-- ... (outras seções sem alterações) ... -->
+
+            <section id="quiz-screen" class="screen hidden">
+                <div id="quiz-progress-container">
+                    <div id="quiz-progress-bar"></div>
+                </div>
+                <h3 id="question-text"></h3>
+                <div id="options-container" class="options-container"></div>
+                <div id="feedback-container">
+                    <p id="feedback"></p>
+                    <p id="reference"></p>
+                </div>
+                <button id="next-btn" class="btn hidden">Próxima</button>
+            </section>
+
+            <section id="result-screen" class="screen hidden">
+                <h2>Parabéns!</h2>
+                <p>Sua pontuação final foi:</p>
+                <p id="final-score"></p>
+                <div id="motivational-message"></div>
+                <button id="restart-btn" class="btn">Jogar Novamente</button>
+            </section>
         </main>
     </div>
     
-    <!-- Modal para criar grupo -->
     <div id="create-group-modal" class="modal">
         <div class="modal-content">
             <h3>Criar Novo Grupo</h3>
