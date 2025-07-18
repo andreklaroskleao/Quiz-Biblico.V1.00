@@ -10,8 +10,9 @@ const userNameSpan = document.getElementById('user-name');
 const userPhotoImg = document.getElementById('user-photo');
 const adminLink = document.getElementById('admin-link');
 const profileLink = document.getElementById('profile-link');
+const welcomeMessage = document.getElementById('welcome-message');
+const mainMenu = document.getElementById('main-menu');
 const difficultySelection = document.getElementById('difficulty-selection');
-
 const initialScreen = document.getElementById('initial-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
@@ -22,9 +23,7 @@ const feedback = document.getElementById('feedback');
 const reference = document.getElementById('reference');
 const nextBtn = document.getElementById('next-btn');
 const finalScore = document.getElementById('final-score');
-const motivationalMessage = document.getElementById('motivational-message');
 const restartBtn = document.getElementById('restart-btn');
-
 const groupsContainer = document.getElementById('groups-container');
 const groupsList = document.getElementById('groups-list');
 const createGroupBtn = document.getElementById('create-group-btn');
@@ -39,8 +38,23 @@ let questions = [];
 let currentQuestionIndex = 0;
 let score = 0;
 let correctAnswersCount = 0;
+let currentGroupId = null; // Armazena o ID do grupo para o quiz atual
 
-// --- Função de Transição de Tela ---
+// --- Inicialização ---
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const groupIdFromUrl = urlParams.get('groupId');
+    if (groupIdFromUrl) {
+        sessionStorage.setItem('currentGroupId', groupIdFromUrl);
+    }
+    // Limpa o parâmetro da URL para não interferir em quizzes individuais futuros
+    if (window.history.replaceState) {
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+    }
+});
+
+// --- Funções ---
 function switchScreen(newScreenId) {
     document.querySelectorAll('.screen').forEach(screen => {
         if (!screen.classList.contains('hidden')) {
@@ -52,17 +66,9 @@ function switchScreen(newScreenId) {
         screenToShow.classList.remove('hidden');
     }
 }
-
-// --- Autenticação ---
 const provider = new GoogleAuthProvider();
-loginBtn.addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch(error => console.error("Erro no login:", error));
-});
-
-logoutBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    signOut(auth).catch(error => console.error("Erro ao deslogar:", error));
-});
+loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(console.error));
+logoutBtn.addEventListener('click', (e) => { e.preventDefault(); signOut(auth).catch(console.error); });
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -70,12 +76,12 @@ onAuthStateChanged(auth, async (user) => {
         loginBtn.classList.add('hidden');
         userInfoDiv.classList.remove('hidden');
         logoutBtn.classList.remove('hidden');
+        mainMenu.classList.remove('hidden');
+        welcomeMessage.classList.add('hidden');
         userNameSpan.textContent = user.displayName;
         userPhotoImg.src = user.photoURL;
         profileLink.href = `perfil.html?uid=${user.uid}`;
         profileLink.classList.remove('hidden');
-        difficultySelection.classList.remove('hidden');
-        groupsContainer.classList.remove('hidden');
         await saveUserToFirestore(user);
         await checkAdminStatus(user.uid);
         await loadUserGroups(user.uid);
@@ -84,10 +90,10 @@ onAuthStateChanged(auth, async (user) => {
         loginBtn.classList.remove('hidden');
         userInfoDiv.classList.add('hidden');
         logoutBtn.classList.add('hidden');
+        mainMenu.classList.add('hidden');
+        welcomeMessage.classList.remove('hidden');
         adminLink.classList.add('hidden');
         profileLink.classList.add('hidden');
-        difficultySelection.classList.add('hidden');
-        groupsContainer.classList.add('hidden');
     }
 });
 
@@ -118,7 +124,6 @@ async function saveUserToFirestore(user) {
         console.error("Erro ao salvar usuário no Firestore:", error);
     }
 }
-
 async function checkAdminStatus(uid) {
     const userRef = doc(db, 'usuarios', uid);
     const userDoc = await getDoc(userRef);
@@ -151,15 +156,8 @@ async function loadUserGroups(uid) {
         groupsList.innerHTML = '<p>Não foi possível carregar os grupos.</p>';
     }
 }
-
-createGroupBtn.addEventListener('click', () => {
-    createGroupModal.classList.add('visible');
-});
-
-cancelGroupBtn.addEventListener('click', () => {
-    createGroupModal.classList.remove('visible');
-});
-
+createGroupBtn.addEventListener('click', () => createGroupModal.classList.add('visible'));
+cancelGroupBtn.addEventListener('click', () => createGroupModal.classList.remove('visible'));
 saveGroupBtn.addEventListener('click', async () => {
     const groupName = groupNameInput.value.trim();
     if (groupName.length < 3) {
@@ -203,15 +201,16 @@ saveGroupBtn.addEventListener('click', async () => {
     }
 });
 
-
 // --- Lógica do Quiz ---
 difficultySelection.addEventListener('click', (e) => {
     if (e.target.matches('.btn[data-difficulty]')) {
+        sessionStorage.removeItem('currentGroupId');
         startQuiz(e.target.dataset.difficulty);
     }
 });
 
 async function startQuiz(difficulty) {
+    currentGroupId = sessionStorage.getItem('currentGroupId');
     score = 0;
     correctAnswersCount = 0;
     currentQuestionIndex = 0;
@@ -229,11 +228,11 @@ async function startQuiz(difficulty) {
             switchScreen('quiz-screen');
             displayQuestion();
         } else {
-            alert("Não foram encontradas perguntas para esta dificuldade. Adicione mais no painel de admin ou tente outra dificuldade.");
+            alert("Não foram encontradas perguntas para esta dificuldade.");
         }
     } catch (error) {
         console.error("Erro ao buscar perguntas: ", error);
-        alert("Ocorreu um erro ao carregar as perguntas. Verifique o console.");
+        alert("Ocorreu um erro ao carregar as perguntas.");
     }
 }
 
@@ -261,7 +260,6 @@ function displayQuestion() {
         optionsContainer.appendChild(button);
     });
 }
-
 function handleAnswer(e) {
     Array.from(optionsContainer.children).forEach(btn => btn.disabled = true);
     const selectedButton = e.target;
@@ -284,7 +282,6 @@ function handleAnswer(e) {
     nextBtn.classList.remove('hidden');
     progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
 }
-
 nextBtn.addEventListener('click', () => {
     currentQuestionIndex++;
     displayQuestion();
@@ -293,21 +290,32 @@ nextBtn.addEventListener('click', () => {
 async function showResults() {
     switchScreen('result-screen');
     finalScore.textContent = score;
-    motivationalMessage.textContent = '"Combati o bom combate, acabei a carreira, guardei a fé." - 2 Timóteo 4:7';
+    document.getElementById('motivational-message').textContent = '"Combati o bom combate, acabei a carreira, guardei a fé." - 2 Timóteo 4:7';
 
     if (!currentUser) return;
     try {
         const userRef = doc(db, 'usuarios', currentUser.uid);
         const wrongAnswersCount = questions.length - correctAnswersCount;
+        
         await updateDoc(userRef, {
             "stats.pontuacaoTotal": increment(score),
             "stats.quizzesJogados": increment(1),
             "stats.respostasCertas": increment(correctAnswersCount),
             "stats.respostasErradas": increment(wrongAnswersCount)
         });
+
+        if (currentGroupId) {
+            const groupRef = doc(db, 'grupos', currentGroupId);
+            await updateDoc(groupRef, {
+                [`membros.${currentUser.uid}.pontuacaoNoGrupo`]: increment(score)
+            });
+            sessionStorage.removeItem('currentGroupId');
+            currentGroupId = null;
+        }
+
         await checkAndAwardAchievements(userRef);
     } catch (error) {
-        console.error("Erro ao atualizar estatísticas do usuário:", error);
+        console.error("Erro ao atualizar estatísticas:", error);
     }
 }
 
@@ -342,7 +350,4 @@ async function checkAndAwardAchievements(userRef) {
         }, 500);
     }
 }
-
-restartBtn.addEventListener('click', () => {
-    switchScreen('initial-screen');
-});
+restartBtn.addEventListener('click', () => switchScreen('initial-screen'));
