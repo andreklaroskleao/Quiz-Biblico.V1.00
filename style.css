@@ -116,3 +116,12 @@ body { font-family: var(--font-family-body); background: linear-gradient(135deg,
 #admin-panel .actions-cell .btn { padding: 8px 12px; font-size: 0.9rem; }
 
 @media (min-width: 576px) { .profile-header { flex-direction: row; text-align: left; } .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Adicione estas regras ao final do seu arquivo style.css */
+
+.user-links a#logout-btn {
+    color: #757575; /* Cinza */
+}
+.user-links a#logout-btn:hover {
+    background-color: #f5f5f5;
+}
