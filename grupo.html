@@ -9,16 +9,14 @@
 <body>
     <div class="container" style="max-width: 800px;">
         <div id="loading-group"><h2>Carregando grupo...</h2></div>
-
         <div id="group-content" class="hidden">
             <a href="/index.html" class="back-link">← Voltar</a>
             <header class="group-header">
                 <h2 id="group-name">Nome do Grupo</h2>
                 <p>Criado por: <span id="group-creator"></span></p>
             </header>
-
             <section class="group-ranking">
-                <h3>Ranking do Grupo</h3>
+                <h3><i class="fas fa-trophy"></i> Ranking do Grupo</h3>
                 <table class="ranking-table">
                     <thead>
                         <tr>
@@ -27,17 +25,11 @@
                             <th class="score">Pontos</th>
                         </tr>
                     </thead>
-                    <tbody id="ranking-tbody">
-                        <!-- Membros serão inseridos aqui -->
-                    </tbody>
+                    <tbody id="ranking-tbody"></tbody>
                 </table>
             </section>
-            
-            <div id="group-actions" class="group-actions">
-                <!-- Botões de ação (Entrar/Convidar) aparecerão aqui -->
-            </div>
+            <div id="group-actions" class="group-actions"></div>
         </div>
-        
         <div id="group-not-found" class="hidden">
             <h2>Grupo não encontrado</h2>
             <p>O link que você acessou pode estar quebrado ou o grupo foi excluído.</p>
