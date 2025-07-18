@@ -15,10 +15,9 @@ const editBioBtn = document.getElementById('edit-bio-btn');
 const statScore = document.getElementById('stat-score');
 const statQuizzes = document.getElementById('stat-quizzes');
 const statCorrect = document.getElementById('stat-correct');
-const statAccuracy = document.getElementById('stat-accuracy'); // Nova estatística
+const statAccuracy = document.getElementById('stat-accuracy');
 const achievementsGrid = document.getElementById('achievements-grid');
 
-// Modal de Edição
 const editBioModal = document.getElementById('edit-bio-modal');
 const bioTextarea = document.getElementById('bio-textarea');
 const saveBioBtn = document.getElementById('save-bio-btn');
@@ -27,7 +26,7 @@ const cancelBioBtn = document.getElementById('cancel-bio-btn');
 let currentUser = null;
 let profileUid = null;
 
-// Definição das conquistas
+// Definição de todas as conquistas
 const allAchievements = {
     'iniciante_da_fe': { title: 'Iniciante da Fé', description: 'Completou o primeiro quiz.', icon: '📖' },
     'erudito_aprendiz': { title: 'Erudito Aprendiz', description: 'Alcançou 1.000 pontos.', icon: '📜' },
@@ -37,7 +36,7 @@ const allAchievements = {
 };
 
 // --- Lógica Principal ---
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     profileUid = params.get('uid');
 
@@ -46,14 +45,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    loadingDiv.classList.remove('hidden');
+    contentDiv.classList.add('hidden');
+    notFoundDiv.classList.add('hidden');
+
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
-        if (currentUser && currentUser.uid === profileUid) {
-            editBioBtn.classList.remove('hidden');
-        }
+        loadProfileData();
     });
-
-    await loadProfileData();
 });
 
 async function loadProfileData() {
@@ -63,7 +62,6 @@ async function loadProfileData() {
 
         if (userDoc.exists()) {
             displayProfileData(userDoc.data());
-            loadingDiv.classList.add('hidden');
             contentDiv.classList.remove('hidden');
         } else {
             showNotFound();
@@ -71,6 +69,8 @@ async function loadProfileData() {
     } catch (error) {
         console.error("Erro ao carregar perfil:", error);
         showNotFound();
+    } finally {
+        loadingDiv.classList.add('hidden');
     }
 }
 
@@ -78,6 +78,8 @@ function displayProfileData(data) {
     profilePhoto.src = data.fotoURL || 'https://placehold.co/150x150/e0e0e0/333?text=?';
     profileName.textContent = data.nome || 'Jogador Anônimo';
     profileBio.textContent = data.bio || '';
+
+    editBioBtn.classList.toggle('hidden', !(currentUser && currentUser.uid === profileUid));
 
     const stats = data.stats || {};
     const totalCertas = stats.respostasCertas || 0;
@@ -92,17 +94,12 @@ function displayProfileData(data) {
 
     achievementsGrid.innerHTML = '';
     const userAchievements = new Set(data.conquistas || []);
-    
+
     Object.keys(allAchievements).forEach(key => {
         const achievement = allAchievements[key];
         const isUnlocked = userAchievements.has(key);
-        
         const achievElement = document.createElement('div');
-        achievElement.classList.add('achievement-badge');
-        if (!isUnlocked) {
-            achievElement.classList.add('locked');
-        }
-
+        achievElement.className = 'achievement-badge' + (isUnlocked ? '' : ' locked');
         achievElement.innerHTML = `
             <div class="achievement-icon">${achievement.icon}</div>
             <div class="achievement-info">
@@ -132,6 +129,10 @@ cancelBioBtn.addEventListener('click', () => {
 
 saveBioBtn.addEventListener('click', async () => {
     const newBio = bioTextarea.value.trim();
+    if (newBio.length > 150) {
+        alert("A biografia não pode ter mais de 150 caracteres.");
+        return;
+    }
     saveBioBtn.disabled = true;
     saveBioBtn.textContent = 'Salvando...';
 
