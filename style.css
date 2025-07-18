@@ -109,7 +109,6 @@ body { font-family: var(--font-family-body); background: linear-gradient(135deg,
 .admin-form input, .admin-form select, .admin-form textarea { padding: 12px; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; font-family: var(--font-family-body); }
 .admin-form input[type="file"] { padding: 5px; }
 #admin-panel .btn { border-radius: 8px; text-transform: none; letter-spacing: 0; }
-/* NOVO: Container da tabela com rolagem */
 .table-container { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; }
 #admin-panel table { width: 100%; border-collapse: collapse; }
 #admin-panel th, #admin-panel td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
