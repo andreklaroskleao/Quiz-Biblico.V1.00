@@ -14,14 +14,17 @@
             <h1>Quiz Bíblico</h1>
             <div id="auth-container">
                 <button id="login-btn" class="btn btn-google">Login com Google</button>
-                <!-- ATUALIZADO: Adicionada a tag <a> com um ID -->
-                <a href="#" id="user-info-anchor" style="text-decoration: none; color: inherit;">
-                    <div id="user-info" class="user-info hidden">
+                <!-- ATUALIZADO: Estrutura simplificada e mais clara -->
+                <div id="user-info" class="user-info hidden">
+                    <img id="user-photo" src="" alt="Foto do Usuário">
+                    <div class="user-details">
                         <span id="user-name"></span>
-                        <img id="user-photo" src="" alt="Foto do Usuário">
-                        <a href="/admin.html" id="admin-link" class="hidden">Admin</a>
+                        <div class="user-links">
+                            <a href="#" id="profile-link" class="hidden">Meu Perfil</a>
+                            <a href="/admin.html" id="admin-link" class="hidden">Admin</a>
+                        </div>
                     </div>
-                </a>
+                </div>
             </div>
         </header>
 
