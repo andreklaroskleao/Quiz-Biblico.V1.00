@@ -3,40 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Administração - Quiz Bíblico</title>
+    <title>Painel de Administração</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container" id="admin-panel" style="max-width: 900px;">
+    <div id="admin-panel" class="container">
         <header class="header">
-            <h1>Painel de Administração</h1>
-            <a href="/index.html">Voltar ao Quiz</a>
+            <h1>Painel de Admin</h1>
+            <a href="/index.html">← Voltar ao Quiz</a>
         </header>
         
-        <div id="auth-guard-message">
-            <h2>Verificando permissões...</h2>
-            <p>Você precisa estar logado com uma conta de administrador para ver esta página.</p>
-        </div>
-
-        <main class="hidden" id="admin-content">
-            <!-- Seção de Gerenciamento em Massa -->
-            <div class="admin-form" style="background-color: #e9ecef;">
+        <main id="admin-content" class="hidden">
+            <div class="admin-form">
                 <h3>Gerenciamento em Massa</h3>
-                <p>Exporte todas as perguntas atuais para um arquivo de backup ou importe perguntas de um arquivo JSON.</p>
-                <div>
-                    <button id="export-btn" class="btn" style="background-color: var(--success-color);">Exportar para JSON</button>
-                </div>
-                <hr style="margin: 15px 0;">
-                <div>
-                    <label for="import-file">Importar perguntas de um arquivo JSON:</label>
-                    <input type="file" id="import-file" accept=".json" style="margin-top: 5px; display: block;">
-                    <button id="import-btn" class="btn" style="margin-top: 10px;">Importar Arquivo</button>
-                </div>
+                <label for="import-file">Importar perguntas de arquivo JSON:</label>
+                <input type="file" id="import-file" accept=".json">
+                <button id="import-btn" class="btn">Importar</button>
+                <hr>
+                <button id="export-btn" class="btn">Exportar Todas as Perguntas</button>
             </div>
 
-            <!-- Formulário para Adicionar/Editar Perguntas -->
             <div class="admin-form">
-                <h3>Adicionar/Editar Pergunta Individual</h3>
+                <h3 id="form-title">Adicionar Nova Pergunta</h3>
                 <input type="hidden" id="question-id">
                 <input type="text" id="enunciado" placeholder="Enunciado da pergunta">
                 <input type="text" id="alt1" placeholder="Alternativa 1">
@@ -56,25 +44,19 @@
                 </select>
                 <input type="text" id="tema" placeholder="Tema (ex: personagens)">
                 <input type="text" id="referencia" placeholder="Referência (ex: Gênesis 1:1)">
-                <button id="save-question-btn" class="btn">Salvar Pergunta</button>
-                <button id="cancel-edit-btn" class="btn hidden" style="background-color: gray;">Cancelar Edição</button>
+                <button id="save-question-btn" class="btn">Salvar</button>
+                <button id="cancel-edit-btn" class="btn hidden" style="background: #888;">Cancelar Edição</button>
             </div>
 
-            <!-- Tabela de Perguntas -->
             <h2>Perguntas Cadastradas</h2>
             <table id="questions-table">
                 <thead>
-                    <tr>
-                        <th>Enunciado</th>
-                        <th>Nível</th>
-                        <th>Ações</th>
-                    </tr>
+                    <tr><th>Enunciado</th><th>Nível</th><th>Ações</th></tr>
                 </thead>
-                <tbody id="questions-tbody">
-                    <!-- Linhas serão inseridas via JS -->
-                </tbody>
+                <tbody id="questions-tbody"></tbody>
             </table>
         </main>
+        <div id="auth-guard-message"><h2>Verificando permissões...</h2></div>
     </div>
     <script type="module" src="admin.js"></script>
 </body>
