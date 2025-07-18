@@ -143,3 +143,23 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 .group-actions { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
 @media (min-width: 768px) { .main-menu { grid-template-columns: 1fr 1fr; } .profile-header { flex-direction: row; text-align: left; } .stats-grid { grid-template-columns: repeat(4, 1fr); } .achievements-grid { grid-template-columns: 1fr 1fr; } .group-actions { flex-direction: row; justify-content: center; } }
+
+#individual-quiz-card.group-mode {
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 20px rgba(253, 216, 53, 0.5);
+}
+
+#group-play-notification {
+    background-color: #fffde7;
+    color: #fbc02d;
+    border: 1px solid var(--accent-color);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+#group-play-notification p {
+    margin: 0;
+    color: var(--dark-color);
+}
