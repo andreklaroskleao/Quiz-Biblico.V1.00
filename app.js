@@ -1,10 +1,10 @@
 import { auth, db } from './firebase.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Elementos da UI ---
 const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn'); // Novo botão
+const logoutBtn = document.getElementById('logout-btn');
 const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const userPhotoImg = document.getElementById('user-photo');
@@ -24,6 +24,14 @@ const nextBtn = document.getElementById('next-btn');
 const finalScore = document.getElementById('final-score');
 const motivationalMessage = document.getElementById('motivational-message');
 const restartBtn = document.getElementById('restart-btn');
+
+const groupsContainer = document.getElementById('groups-container');
+const groupsList = document.getElementById('groups-list');
+const createGroupBtn = document.getElementById('create-group-btn');
+const createGroupModal = document.getElementById('create-group-modal');
+const groupNameInput = document.getElementById('group-name-input');
+const saveGroupBtn = document.getElementById('save-group-btn');
+const cancelGroupBtn = document.getElementById('cancel-group-btn');
 
 // --- Estado do Quiz ---
 let currentUser = null;
@@ -51,7 +59,6 @@ loginBtn.addEventListener('click', () => {
     signInWithPopup(auth, provider).catch(error => console.error("Erro no login:", error));
 });
 
-// NOVO: Evento de clique para o botão de logout
 logoutBtn.addEventListener('click', (e) => {
     e.preventDefault();
     signOut(auth).catch(error => console.error("Erro ao deslogar:", error));
@@ -62,22 +69,25 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         loginBtn.classList.add('hidden');
         userInfoDiv.classList.remove('hidden');
-        logoutBtn.classList.remove('hidden'); // Mostra o botão de logout
+        logoutBtn.classList.remove('hidden');
         userNameSpan.textContent = user.displayName;
         userPhotoImg.src = user.photoURL;
         profileLink.href = `perfil.html?uid=${user.uid}`;
         profileLink.classList.remove('hidden');
         difficultySelection.classList.remove('hidden');
+        groupsContainer.classList.remove('hidden');
         await saveUserToFirestore(user);
         await checkAdminStatus(user.uid);
+        await loadUserGroups(user.uid);
     } else {
         currentUser = null;
         loginBtn.classList.remove('hidden');
         userInfoDiv.classList.add('hidden');
-        logoutBtn.classList.add('hidden'); // Esconde o botão de logout
+        logoutBtn.classList.add('hidden');
         adminLink.classList.add('hidden');
         profileLink.classList.add('hidden');
         difficultySelection.classList.add('hidden');
+        groupsContainer.classList.add('hidden');
     }
 });
 
@@ -97,16 +107,9 @@ async function saveUserToFirestore(user) {
                 conquistas: []
             });
         } else {
-            // CORREÇÃO APLICADA AQUI:
-            // Cria um objeto apenas com os dados que realmente existem para evitar enviar 'null'
             const updateData = {};
-            if (user.displayName) {
-                updateData.nome = user.displayName;
-            }
-            if (user.photoURL) {
-                updateData.fotoURL = user.photoURL;
-            }
-            // Só atualiza se houver dados para atualizar
+            if (user.displayName) updateData.nome = user.displayName;
+            if (user.photoURL) updateData.fotoURL = user.photoURL;
             if (Object.keys(updateData).length > 0) {
                 await setDoc(userRef, updateData, { merge: true });
             }
@@ -121,6 +124,85 @@ async function checkAdminStatus(uid) {
     const userDoc = await getDoc(userRef);
     adminLink.classList.toggle('hidden', !(userDoc.exists() && userDoc.data().admin === true));
 }
+
+// --- Lógica de Grupos ---
+async function loadUserGroups(uid) {
+    groupsList.innerHTML = '<p>Carregando...</p>';
+    const q = query(collection(db, "grupos"), where(`membros.${uid}.uid`, "==", uid));
+    try {
+        const querySnapshot = await getDocs(q);
+        groupsList.innerHTML = '';
+        if (querySnapshot.empty) {
+            groupsList.innerHTML = '<p>Você ainda não participa de nenhum grupo.</p>';
+        }
+        querySnapshot.forEach((doc) => {
+            const group = doc.data();
+            const groupElement = document.createElement('a');
+            groupElement.href = `grupo.html?id=${doc.id}`;
+            groupElement.className = 'group-item';
+            groupElement.innerHTML = `
+                <span>${group.nomeDoGrupo}</span>
+                <span class="member-count">${Object.keys(group.membros).length} membros</span>
+            `;
+            groupsList.appendChild(groupElement);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar grupos:", error);
+        groupsList.innerHTML = '<p>Não foi possível carregar os grupos.</p>';
+    }
+}
+
+createGroupBtn.addEventListener('click', () => {
+    createGroupModal.classList.add('visible');
+});
+
+cancelGroupBtn.addEventListener('click', () => {
+    createGroupModal.classList.remove('visible');
+});
+
+saveGroupBtn.addEventListener('click', async () => {
+    const groupName = groupNameInput.value.trim();
+    if (groupName.length < 3) {
+        alert("O nome do grupo deve ter pelo menos 3 caracteres.");
+        return;
+    }
+    if (!currentUser) {
+        alert("Você precisa estar logado para criar um grupo.");
+        return;
+    }
+
+    saveGroupBtn.disabled = true;
+    saveGroupBtn.textContent = 'Criando...';
+
+    try {
+        const newGroup = {
+            nomeDoGrupo: groupName,
+            criadorUid: currentUser.uid,
+            criadorNome: currentUser.displayName,
+            dataCriacao: serverTimestamp(),
+            membros: {
+                [currentUser.uid]: {
+                    uid: currentUser.uid,
+                    nome: currentUser.displayName,
+                    fotoURL: currentUser.photoURL,
+                    pontuacaoNoGrupo: 0
+                }
+            }
+        };
+        await addDoc(collection(db, "grupos"), newGroup);
+        alert(`Grupo "${groupName}" criado com sucesso!`);
+        groupNameInput.value = '';
+        createGroupModal.classList.remove('visible');
+        await loadUserGroups(currentUser.uid);
+    } catch (error) {
+        console.error("Erro ao criar grupo:", error);
+        alert("Não foi possível criar o grupo.");
+    } finally {
+        saveGroupBtn.disabled = false;
+        saveGroupBtn.textContent = 'Criar';
+    }
+});
+
 
 // --- Lógica do Quiz ---
 difficultySelection.addEventListener('click', (e) => {
