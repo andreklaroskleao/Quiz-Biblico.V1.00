@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Grupo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="max-width: 800px;">
+        <div id="loading-group"><h2>Carregando grupo...</h2></div>
+
+        <div id="group-content" class="hidden">
+            <a href="/index.html" class="back-link">← Voltar</a>
+            <header class="group-header">
+                <h2 id="group-name">Nome do Grupo</h2>
+                <p>Criado por: <span id="group-creator"></span></p>
+            </header>
+
+            <section class="group-ranking">
+                <h3>Ranking do Grupo</h3>
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th class="rank">#</th>
+                            <th>Membro</th>
+                            <th class="score">Pontos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-tbody">
+                        <!-- Membros serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </section>
+            
+            <div id="group-actions" class="group-actions">
+                <!-- Botões de ação (Entrar/Convidar) aparecerão aqui -->
+            </div>
+        </div>
+        
+        <div id="group-not-found" class="hidden">
+            <h2>Grupo não encontrado</h2>
+            <p>O link que você acessou pode estar quebrado ou o grupo foi excluído.</p>
+            <a href="/index.html" class="btn">Voltar ao Início</a>
+        </div>
+    </div>
+    <script type="module" src="grupo.js"></script>
+</body>
+</html>
