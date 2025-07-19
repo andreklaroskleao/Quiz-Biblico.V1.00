@@ -33,25 +33,31 @@
                 </div>
                 
                 <div id="main-menu" class="main-menu hidden">
-                    <!-- ID adicionado ao card e ao título -->
                     <div id="individual-quiz-card" class="menu-card">
                         <h3 id="individual-quiz-title"><i class="fas fa-user"></i> Quiz Individual</h3>
-                        <p>Teste seus conhecimentos em uma partida solo. Escolha a dificuldade e some pontos para seu perfil!</p>
+                        <div id="group-play-notification" class="hidden">
+                            <p>Jogando pelo grupo: <strong id="group-play-name"></strong></p>
+                            <button id="back-to-menu-btn" class="btn btn-secondary btn-small" style="margin-top: 10px;"><i class="fas fa-arrow-left"></i> Voltar</button>
+                        </div>
+                        <p>Teste seus conhecimentos e some pontos para seu perfil!</p>
                         <div id="difficulty-selection">
                             <button class="btn" data-difficulty="facil">Fácil</button>
                             <button class="btn" data-difficulty="medio">Médio</button>
                             <button class="btn" data-difficulty="dificil">Difícil</button>
                         </div>
                     </div>
-                    <!-- ID adicionado ao card -->
                     <div id="group-competition-card" class="menu-card">
                         <h3><i class="fas fa-users"></i> Competição em Grupo</h3>
-                        <p>Junte-se a um grupo ou crie o seu para competir com amigos e ver quem sabe mais!</p>
+                        <p>Junte-se a um grupo ou crie o seu para competir com amigos!</p>
                         <div id="groups-container">
                             <div id="groups-list"></div>
-                            <button id="create-group-btn" class="btn"><i class="fas fa-plus"></i> Criar Novo Grupo</button>
+                            <button id="create-group-btn" class="btn"><i class="fas fa-plus"></i> Criar Grupo</button>
                         </div>
                     </div>
+                    <a href="ranking.html" id="ranking-link" class="menu-card" style="text-decoration: none; color: inherit;">
+                        <h3><i class="fas fa-trophy"></i> Ranking Geral</h3>
+                        <p>Veja os melhores jogadores e compare sua pontuação com a de todos os participantes.</p>
+                    </a>
                 </div>
             </section>
 
@@ -73,7 +79,7 @@
                 <p>Sua pontuação final foi:</p>
                 <p id="final-score"></p>
                 <div id="motivational-message"></div>
-                <button id="restart-btn" class="btn">Jogar Novamente</button>
+                <button id="restart-btn" class="btn">Voltar ao Início</button>
             </section>
         </main>
     </div>
