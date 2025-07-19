@@ -154,5 +154,6 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 
 /* --- PÁGINA DE RANKING --- */
 .ranking-header { text-align: center; margin-bottom: 2rem; }
+.table-wrapper { width: 100%; overflow-x: auto; } /* CORREÇÃO PARA MARGEM */
 
 @media (min-width: 768px) { .main-menu { grid-template-columns: 1fr 1fr 1fr; } .profile-header { flex-direction: row; text-align: left; } .stats-grid { grid-template-columns: repeat(4, 1fr); } .achievements-grid { grid-template-columns: 1fr 1fr; } .group-actions { flex-direction: row; justify-content: center; } }
