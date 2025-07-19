@@ -7,59 +7,40 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div class="container">
+        <!-- CABEÇALHO COM LOGIN/INFO DO USUÁRIO -->
         <header class="header">
             <h1>Quiz Bíblico</h1>
             <div id="auth-container">
-                <button id="login-btn" class="btn btn-google"><i class="fab fa-google"></i> Login</button>
-                <div id="user-info" class="user-info hidden">
-                    <img id="user-photo" src="" alt="Foto do Usuário">
-                    <div class="user-details">
+                <button id="login-btn" class="btn btn-google">Login com Google</button>
+                <!-- ATUALIZADO: Adicionada a tag <a> com um ID -->
+                <a href="#" id="user-info-anchor" style="text-decoration: none; color: inherit;">
+                    <div id="user-info" class="user-info hidden">
                         <span id="user-name"></span>
-                        <div class="user-links">
-                            <a href="#" id="profile-link" class="hidden">Meu Perfil</a>
-                            <a href="/admin.html" id="admin-link" class="hidden">Admin</a>
-                            <a href="#" id="logout-btn" class="hidden">Sair</a>
-                        </div>
+                        <img id="user-photo" src="" alt="Foto do Usuário">
+                        <a href="/admin.html" id="admin-link" class="hidden">Admin</a>
                     </div>
-                </div>
+                </a>
             </div>
         </header>
 
-        <main id="main-content">
-            <section id="initial-screen" class="screen">
-                <div id="welcome-message">
-                    <h2>"A tua palavra é lâmpada para os meus pés e luz para o meu caminho." - Salmos 119:105</h2>
-                </div>
-                
-                <div id="main-menu" class="main-menu hidden">
-                    <div id="individual-quiz-card" class="menu-card">
-                        <h3 id="individual-quiz-title"><i class="fas fa-user"></i> Quiz Individual</h3>
-                        <!-- Notificação para Jogo em Grupo -->
-                        <div id="group-play-notification" class="hidden">
-                            <p>Jogando pelo grupo: <strong id="group-play-name"></strong></p>
-                        </div>
-                        <p>Teste seus conhecimentos em uma partida solo. Escolha a dificuldade e some pontos para seu perfil!</p>
-                        <div id="difficulty-selection">
-                            <button class="btn" data-difficulty="facil">Fácil</button>
-                            <button class="btn" data-difficulty="medio">Médio</button>
-                            <button class="btn" data-difficulty="dificil">Difícil</button>
-                        </div>
-                    </div>
-                    <div id="group-competition-card" class="menu-card">
-                        <h3><i class="fas fa-users"></i> Competição em Grupo</h3>
-                        <p>Junte-se a um grupo ou crie o seu para competir com amigos e ver quem sabe mais!</p>
-                        <div id="groups-container">
-                            <div id="groups-list"></div>
-                            <button id="create-group-btn" class="btn"><i class="fas fa-plus"></i> Criar Novo Grupo</button>
-                        </div>
-                    </div>
+        <main>
+            <!-- TELA INICIAL -->
+            <section id="initial-screen">
+                <h2>"A tua palavra é lâmpada para os meus pés e luz para o meu caminho." - Salmos 119:105</h2>
+                <div id="difficulty-selection" class="difficulty-selection hidden">
+                    <h3>Escolha a dificuldade:</h3>
+                    <button class="btn" data-difficulty="facil">Fácil</button>
+                    <button class="btn" data-difficulty="medio">Médio</button>
+                    <button class="btn" data-difficulty="dificil">Difícil</button>
                 </div>
             </section>
 
-            <section id="quiz-screen" class="screen hidden">
-                <div id="quiz-progress-container">
-                    <div id="quiz-progress-bar"></div>
+            <!-- TELA DO QUIZ -->
+            <section id="quiz-screen" class="hidden">
+                <div id="quiz-header">
+                    <p>Pontuação: <span id="score">0</span></p>
                 </div>
                 <h3 id="question-text"></h3>
                 <div id="options-container" class="options-container"></div>
@@ -70,23 +51,15 @@
                 <button id="next-btn" class="btn hidden">Próxima</button>
             </section>
 
-            <section id="result-screen" class="screen hidden">
+            <!-- TELA DE RESULTADO -->
+            <section id="result-screen" class="hidden">
                 <h2>Parabéns!</h2>
                 <p>Sua pontuação final foi:</p>
-                <p id="final-score"></p>
+                <p id="final-score" style="font-size: 3rem; font-weight: bold;"></p>
                 <div id="motivational-message"></div>
                 <button id="restart-btn" class="btn">Jogar Novamente</button>
             </section>
         </main>
-    </div>
-    
-    <div id="create-group-modal" class="modal">
-        <div class="modal-content">
-            <h3>Criar Novo Grupo</h3>
-            <input type="text" id="group-name-input" placeholder="Nome do seu grupo" maxlength="50">
-            <button id="save-group-btn" class="btn">Criar</button>
-            <button id="cancel-group-btn" class="btn btn-secondary">Cancelar</button>
-        </div>
     </div>
 
     <script type="module" src="app.js"></script>
