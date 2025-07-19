@@ -6,62 +6,39 @@ import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12
 const loadingDiv = document.getElementById('loading-profile');
 const contentDiv = document.getElementById('profile-content');
 const notFoundDiv = document.getElementById('profile-not-found');
+
 const profilePhoto = document.getElementById('profile-photo');
 const profileName = document.getElementById('profile-name');
 const profileBio = document.getElementById('profile-bio');
 const editBioBtn = document.getElementById('edit-bio-btn');
-const shareProfileBtn = document.getElementById('share-profile-btn');
+
 const statScore = document.getElementById('stat-score');
 const statQuizzes = document.getElementById('stat-quizzes');
 const statCorrect = document.getElementById('stat-correct');
-const statAccuracy = document.getElementById('stat-accuracy');
+const statWrong = document.getElementById('stat-wrong');
 const achievementsGrid = document.getElementById('achievements-grid');
+
+// Modal de Edição
 const editBioModal = document.getElementById('edit-bio-modal');
 const bioTextarea = document.getElementById('bio-textarea');
 const saveBioBtn = document.getElementById('save-bio-btn');
 const cancelBioBtn = document.getElementById('cancel-bio-btn');
-const showInRankingCheckbox = document.getElementById('show-in-ranking-checkbox');
-const settingsSection = document.getElementById('profile-settings');
 
 let currentUser = null;
 let profileUid = null;
 
-// Definição de todas as conquistas
-const allAchievements = {
+// Definição das conquistas (para exibir nome e descrição)
+const achievementsMap = {
     'iniciante_da_fe': { title: 'Iniciante da Fé', description: 'Completou o primeiro quiz.', icon: '📖' },
-    'peregrino_fiel': { title: 'Peregrino Fiel', description: 'Jogou 10 quizzes.', icon: '👣' },
-    'discipulo_dedicado': { title: 'Discípulo Dedicado', description: 'Jogou 50 quizzes.', icon: '🚶‍♂️' },
-    'veterano_da_palavra': { title: 'Veterano da Palavra', description: 'Jogou 100 quizzes.', icon: '🏃‍♂️' },
-    'erudito_aprendiz': { title: 'Erudito Aprendiz', description: 'Alcançou 1.000 pontos.', icon: '📜' },
-    'sabio_de_israel': { title: 'Sábio de Israel', description: 'Alcançou 5.000 pontos.', icon: '👑' },
-    'conselheiro_real': { title: 'Conselheiro Real', description: 'Alcançou 10.000 pontos.', icon: '🏛️' },
-    'mestre_da_palavra': { title: 'Mestre da Palavra', description: 'Acertou 100 perguntas.', icon: '✒️' },
-    'escriba_habil': { title: 'Escriba Hábil', description: 'Acertou 500 perguntas.', icon: '✍️' },
-    'doutor_da_lei': { title: 'Doutor da Lei', description: 'Acertou 1.000 perguntas.', icon: '🎓' },
-    'explorador_do_pentateuco': { title: 'Explorador do Pentateuco', description: 'Acertou 20 perguntas sobre o Pentateuco.', icon: '📜' },
-    'historiador_dos_reis': { title: 'Historiador dos Reis', description: 'Acertou 20 perguntas sobre História.', icon: '🏰' },
-    'amigo_dos_profetas': { title: 'Amigo dos Profetas', description: 'Acertou 20 perguntas sobre Profetas.', icon: '🗣️' },
-    'seguidor_do_messias': { title: 'Seguidor do Messias', description: 'Acertou 50 perguntas sobre os Evangelhos.', icon: '✝️' },
-    'pioneiro_da_igreja': { title: 'Pioneiro da Igreja', description: 'Acertou 20 perguntas sobre a Igreja Primitiva.', icon: '⛪' },
-    'leitor_de_cartas': { title: 'Leitor de Cartas', description: 'Acertou 30 perguntas sobre as Epístolas.', icon: '✉️' },
-    'visionario_do_apocalipse': { title: 'Visionário do Apocalipse', description: 'Acertou 10 perguntas sobre Profecias.', icon: '👁️' },
-    'conhecedor_de_patriarcas': { title: 'Conhecedor de Patriarcas', description: 'Acertou 15 perguntas sobre os Patriarcas.', icon: '👴' },
-    'especialista_em_milagres': { title: 'Especialista em Milagres', description: 'Acertou 10 perguntas sobre Milagres.', icon: '✨' },
-    'curioso_biblico': { title: 'Curioso Bíblico', description: 'Acertou 10 perguntas de Curiosidades.', icon: '🤔' },
-    'teologo_iniciante': { title: 'Teólogo Iniciante', description: 'Acertou 10 perguntas de Teologia.', icon: '🧠' },
-    'bom_comeco': { title: 'Bom Começo', description: 'Acertou 10 perguntas seguidas.', icon: '👍' },
-    'impecavel': { title: 'Impecável', description: 'Completou um quiz sem errar nenhuma pergunta.', icon: '🎯' },
-    'quase_la': { title: 'Quase Lá', description: 'Fez 90 pontos em um quiz.', icon: '🥈' },
-    'perfeccionista': { title: 'Perfeccionista', description: 'Fez 100 pontos em um quiz.', icon: '🏆' },
-    'fundador_de_grupo': { title: 'Fundador', description: 'Criou seu primeiro grupo.', icon: '🏗️' },
-    'socializador': { title: 'Socializador', description: 'Entrou em um grupo.', icon: '🤝' },
-    'competidor': { title: 'Competidor', description: 'Jogou uma partida por um grupo.', icon: '⚔️' },
-    'campeao_de_grupo': { title: 'Campeão de Grupo', description: 'Alcançou 1.000 pontos em um grupo.', icon: '🥇' },
-    'lenda_do_grupo': { title: 'Lenda do Grupo', description: 'Alcançou 5.000 pontos em um grupo.', icon: '🌟' }
+    'erudito_aprendiz': { title: 'Erudito Aprendiz', description: 'Alcançou 1000 pontos.', icon: '📜' },
+    'peregrino_fiel': { title: 'Peregrino Fiel', description: 'Jogou 10 quizzes.', icon: '👣' }
 };
 
 // --- Lógica Principal ---
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    loadingDiv.classList.remove('hidden');
+
+    // Pega o UID da URL
     const params = new URLSearchParams(window.location.search);
     profileUid = params.get('uid');
 
@@ -70,14 +47,17 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    loadingDiv.classList.remove('hidden');
-    contentDiv.classList.add('hidden');
-    notFoundDiv.classList.add('hidden');
-
+    // Verifica o usuário atualmente logado
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
-        loadProfileData();
+        // Se o usuário logado for o dono do perfil, mostra o botão de editar
+        if (currentUser && currentUser.uid === profileUid) {
+            editBioBtn.classList.remove('hidden');
+        }
     });
+
+    // Carrega os dados do perfil
+    await loadProfileData();
 });
 
 async function loadProfileData() {
@@ -86,7 +66,9 @@ async function loadProfileData() {
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-            displayProfileData(userDoc.data());
+            const userData = userDoc.data();
+            displayProfileData(userData);
+            loadingDiv.classList.add('hidden');
             contentDiv.classList.remove('hidden');
         } else {
             showNotFound();
@@ -94,8 +76,6 @@ async function loadProfileData() {
     } catch (error) {
         console.error("Erro ao carregar perfil:", error);
         showNotFound();
-    } finally {
-        loadingDiv.classList.add('hidden');
     }
 }
 
@@ -104,42 +84,35 @@ function displayProfileData(data) {
     profileName.textContent = data.nome || 'Jogador Anônimo';
     profileBio.textContent = data.bio || '';
 
-    const isOwnProfile = currentUser && currentUser.uid === profileUid;
-    editBioBtn.classList.toggle('hidden', !isOwnProfile);
-    settingsSection.classList.toggle('hidden', !isOwnProfile);
-
-    if (isOwnProfile) {
-        showInRankingCheckbox.checked = data.showInRanking !== false;
-    }
-
+    // Preenche as estatísticas
     const stats = data.stats || {};
-    const totalCertas = stats.respostasCertas || 0;
-    const totalErradas = stats.respostasErradas || 0;
-    const totalRespostas = totalCertas + totalErradas;
-    const accuracy = totalRespostas > 0 ? ((totalCertas / totalRespostas) * 100).toFixed(0) : 0;
-
     statScore.textContent = stats.pontuacaoTotal || 0;
     statQuizzes.textContent = stats.quizzesJogados || 0;
-    statCorrect.textContent = totalCertas;
-    statAccuracy.textContent = `${accuracy}%`;
+    statCorrect.textContent = stats.respostasCertas || 0;
+    statWrong.textContent = stats.respostasErradas || 0;
 
+    // Preenche as conquistas
     achievementsGrid.innerHTML = '';
-    const userAchievements = new Set(data.conquistas || []);
-
-    Object.keys(allAchievements).forEach(key => {
-        const achievement = allAchievements[key];
-        const isUnlocked = userAchievements.has(key);
-        const achievElement = document.createElement('div');
-        achievElement.className = 'achievement-badge' + (isUnlocked ? '' : ' locked');
-        achievElement.innerHTML = `
-            <div class="achievement-icon">${achievement.icon}</div>
-            <div class="achievement-info">
-                <h4>${achievement.title}</h4>
-                <p>${achievement.description}</p>
-            </div>
-        `;
-        achievementsGrid.appendChild(achievElement);
-    });
+    const userAchievements = data.conquistas || [];
+    if (userAchievements.length === 0) {
+        achievementsGrid.innerHTML = '<p>Nenhuma conquista desbloqueada ainda. Continue jogando!</p>';
+    } else {
+        userAchievements.forEach(achievKey => {
+            const achievement = achievementsMap[achievKey];
+            if (achievement) {
+                const achievElement = document.createElement('div');
+                achievElement.classList.add('achievement-badge');
+                achievElement.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-info">
+                        <h4>${achievement.title}</h4>
+                        <p>${achievement.description}</p>
+                    </div>
+                `;
+                achievementsGrid.appendChild(achievElement);
+            }
+        });
+    }
 }
 
 function showNotFound() {
@@ -148,54 +121,33 @@ function showNotFound() {
     notFoundDiv.classList.remove('hidden');
 }
 
-// --- Lógica do Modal e Ações ---
+// --- Lógica do Modal de Edição de Bio ---
 editBioBtn.addEventListener('click', () => {
     bioTextarea.value = profileBio.textContent;
-    editBioModal.classList.add('visible');
+    editBioModal.classList.remove('hidden');
 });
 
 cancelBioBtn.addEventListener('click', () => {
-    editBioModal.classList.remove('visible');
+    editBioModal.classList.add('hidden');
 });
 
 saveBioBtn.addEventListener('click', async () => {
-    const newBio = bioTextarea.value.trim();
-    if (newBio.length > 150) {
-        alert("A biografia não pode ter mais de 150 caracteres.");
-        return;
-    }
+    const newBio = bioTextarea.value;
     saveBioBtn.disabled = true;
     saveBioBtn.textContent = 'Salvando...';
 
     try {
         const userRef = doc(db, 'usuarios', profileUid);
-        await updateDoc(userRef, { bio: newBio });
+        await updateDoc(userRef, {
+            bio: newBio
+        });
         profileBio.textContent = newBio;
-        editBioModal.classList.remove('visible');
+        editBioModal.classList.add('hidden');
     } catch (error) {
         console.error("Erro ao salvar a bio:", error);
         alert("Não foi possível salvar a bio. Tente novamente.");
     } finally {
         saveBioBtn.disabled = false;
         saveBioBtn.textContent = 'Salvar';
-    }
-});
-
-shareProfileBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('Link do perfil copiado para a área de transferência!'))
-        .catch(() => alert('Não foi possível copiar o link.'));
-});
-
-showInRankingCheckbox.addEventListener('change', async (e) => {
-    if (!currentUser) return;
-    try {
-        const userRef = doc(db, 'usuarios', currentUser.uid);
-        await updateDoc(userRef, {
-            showInRanking: e.target.checked
-        });
-    } catch (error) {
-        console.error("Erro ao atualizar preferência de ranking:", error);
-        alert("Não foi possível salvar sua preferência.");
     }
 });
