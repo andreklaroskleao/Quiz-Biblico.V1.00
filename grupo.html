@@ -11,14 +11,14 @@
         <div id="loading-group"><h2>Carregando grupo...</h2></div>
 
         <div id="group-content" class="hidden">
-            <a href="/index.html" class="back-link">← Voltar</a>
+            <a href="/index.html" class="btn btn-secondary back-link"><i class="fas fa-arrow-left"></i> Voltar</a>
             <header class="group-header">
+                <div id="group-icon" class="group-icon"></div>
                 <h2 id="group-name">Nome do Grupo</h2>
                 <p>Criado por: <span id="group-creator"></span></p>
             </header>
-
             <section class="group-ranking">
-                <h3>Ranking do Grupo</h3>
+                <h3><i class="fas fa-trophy"></i> Ranking do Grupo</h3>
                 <table class="ranking-table">
                     <thead>
                         <tr>
@@ -27,15 +27,10 @@
                             <th class="score">Pontos</th>
                         </tr>
                     </thead>
-                    <tbody id="ranking-tbody">
-                        <!-- Membros serão inseridos aqui -->
-                    </tbody>
+                    <tbody id="ranking-tbody"></tbody>
                 </table>
             </section>
-            
-            <div id="group-actions" class="group-actions">
-                <!-- Botões de ação (Entrar/Convidar) aparecerão aqui -->
-            </div>
+            <div id="group-actions" class="group-actions"></div>
         </div>
         
         <div id="group-not-found" class="hidden">
@@ -44,6 +39,19 @@
             <a href="/index.html" class="btn">Voltar ao Início</a>
         </div>
     </div>
+    
+    <div id="edit-group-modal" class="modal">
+        <div class="modal-content">
+            <h3>Editar Grupo</h3>
+            <label for="edit-group-name-input">Nome do Grupo</label>
+            <input type="text" id="edit-group-name-input" placeholder="Nome do seu grupo" maxlength="50">
+            <label>Ícone do Grupo</label>
+            <div id="icon-selection" class="icon-selection"></div>
+            <button id="save-group-btn" class="btn">Salvar Alterações</button>
+            <button id="cancel-group-btn" class="btn btn-secondary">Cancelar</button>
+        </div>
+    </div>
+
     <script type="module" src="grupo.js"></script>
 </body>
 </html>
