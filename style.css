@@ -380,3 +380,16 @@ body.tema-crianca .option-btn.wrong {
     outline: 4px solid var(--accent-color);
     outline-offset: 2px;
 }
+/* --- ESTILOS DO MODAL DE DOAÇÃO --- */
+#donate-modal .close-button {
+    color: #aaa;
+    position: absolute;
+    right: 15px;
+    top: 5px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+#donate-modal .close-button:hover {
+    color: black;
+}
