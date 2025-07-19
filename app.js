@@ -3,13 +3,12 @@ import { auth, db } from './firebase.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Elementos da UI (sem alterações, mas listados para contexto) ---
+// --- Elementos da UI ---
 const loginBtn = document.getElementById('login-btn');
 const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const userPhotoImg = document.getElementById('user-photo');
 const adminLink = document.getElementById('admin-link');
-// NOVO: Adicionar uma âncora em volta da user-info para o link do perfil
 const userInfoAnchor = document.getElementById('user-info-anchor'); 
 
 const initialScreen = document.getElementById('initial-screen');
@@ -67,7 +66,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// ATUALIZADO: Salva o usuário com o novo campo 'aceitaRanking'
+// Salva o usuário no Firestore, garantindo que novos campos sejam adicionados
 async function saveUserToFirestore(user) {
     const userRef = doc(db, 'usuarios', user.uid);
     const userDoc = await getDoc(userRef);
