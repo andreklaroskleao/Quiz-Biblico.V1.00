@@ -44,6 +44,23 @@
                 </select>
                 <input type="text" id="tema" placeholder="Tema (ex: personagens)">
                 <input type="text" id="referencia" placeholder="Referência (ex: Gênesis 1:1)">
+                
+                <div id="faixa-etaria-container" style="text-align: left; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <strong>Faixa Etária:</strong>
+                    <div>
+                        <input type="checkbox" id="faixa-crianca" value="crianca">
+                        <label for="faixa-crianca">Criança (6-10)</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="faixa-adolescente" value="adolescente">
+                        <label for="faixa-adolescente">Adolescente (11-16)</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="faixa-adulto" value="adulto" checked>
+                        <label for="faixa-adulto">Adulto (17+)</label>
+                    </div>
+                </div>
+
                 <button id="save-question-btn" class="btn">Salvar</button>
                 <button id="cancel-edit-btn" class="btn hidden" style="background: #888;">Cancelar Edição</button>
             </div>
