@@ -7,85 +7,54 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="profile-container" class="container" style="max-width: 800px;">
-        <div id="loading-profile" class="hidden">
-            <h2>Carregando perfil...</h2>
-        </div>
-
+        <div id="loading-profile"><h2>Carregando perfil...</h2></div>
         <div id="profile-content" class="hidden">
-            <a href="/index.html" class="back-link">← Voltar ao Início</a>
+            <a href="/index.html" class="btn btn-secondary back-link"><i class="fas fa-arrow-left"></i> Voltar</a>
             <header class="profile-header">
                 <img id="profile-photo" src="https://placehold.co/150x150/e0e0e0/333?text=?" alt="Foto do Perfil">
                 <div class="profile-info">
                     <h2 id="profile-name">Nome do Jogador</h2>
                     <p id="profile-bio">Carregando bio...</p>
-                    <!-- Container para os botões de ação -->
-                    <div class="profile-actions">
-                        <button id="edit-bio-btn" class="btn btn-small hidden">Editar Bio</button>
-                        <button id="share-profile-btn" class="btn btn-small">Compartilhar</button>
-                    </div>
+                    <button id="edit-bio-btn" class="btn btn-small hidden"><i class="fas fa-pencil-alt"></i> Editar Bio</button>
+                    <button id="share-profile-btn" class="btn btn-small btn-secondary"><i class="fas fa-share-alt"></i> Compartilhar</button>
                 </div>
             </header>
-
-            <div id="edit-bio-modal" class="modal hidden">
-                <div class="modal-content">
-                    <h3>Editar sua Biografia</h3>
-                    <textarea id="bio-textarea" rows="4" maxlength="150"></textarea>
-                    <button id="save-bio-btn" class="btn">Salvar</button>
-                    <button id="cancel-bio-btn" class="btn btn-secondary">Cancelar</button>
-                </div>
-            </div>
-
             <section class="profile-stats">
                 <h3>Estatísticas</h3>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <h4>Pontuação Total</h4>
-                        <p id="stat-score">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Quizzes Jogados</h4>
-                        <p id="stat-quizzes">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Respostas Certas</h4>
-                        <p id="stat-correct">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Respostas Erradas</h4>
-                        <p id="stat-wrong">0</p>
-                    </div>
+                    <div class="stat-card"><h4>Pontuação Total</h4><p id="stat-score">0</p></div>
+                    <div class="stat-card"><h4>Quizzes Jogados</h4><p id="stat-quizzes">0</p></div>
+                    <div class="stat-card"><h4>Respostas Certas</h4><p id="stat-correct">0</p></div>
+                    <div class="stat-card"><h4>Taxa de Acerto</h4><p id="stat-accuracy">0%</p></div>
                 </div>
             </section>
-
             <section class="profile-achievements">
                 <h3>Conquistas</h3>
-                <div id="achievements-grid" class="achievements-grid">
-                    <!-- Conquistas serão inseridas aqui pelo JS -->
-                </div>
+                <div id="achievements-grid" class="achievements-grid"></div>
             </section>
-            
-            <!-- Seção de Configurações de Privacidade (visível apenas para o dono do perfil) -->
             <section id="profile-settings" class="profile-settings hidden">
-                <h3>Configurações de Privacidade</h3>
-                <div class="setting-item">
-                    <input type="checkbox" id="ranking-checkbox">
-                    <label for="ranking-checkbox">Desejo participar do Ranking Geral</label>
+                <h3>Configurações</h3>
+                <div class="settings-item">
+                    <label for="show-in-ranking-checkbox">Mostrar meu perfil no Ranking Geral</label>
+                    <input type="checkbox" id="show-in-ranking-checkbox">
                 </div>
-                <p class="setting-description">
-                    Ao marcar esta opção, seu perfil, incluindo nome, pontuação e conquistas, será visível para outros jogadores no ranking geral.
-                </p>
             </section>
         </div>
-
         <div id="profile-not-found" class="hidden">
             <h2>Perfil não encontrado</h2>
             <p>O jogador que você está procurando não existe.</p>
             <a href="/index.html" class="btn">Voltar ao Início</a>
         </div>
     </div>
-
+    <div id="edit-bio-modal" class="modal">
+        <div class="modal-content">
+            <h3>Editar sua Biografia</h3>
+            <textarea id="bio-textarea" rows="4" maxlength="150"></textarea>
+            <button id="save-bio-btn" class="btn">Salvar</button>
+            <button id="cancel-bio-btn" class="btn btn-secondary">Cancelar</button>
+        </div>
+    </div>
     <script type="module" src="perfil.js"></script>
 </body>
 </html>
