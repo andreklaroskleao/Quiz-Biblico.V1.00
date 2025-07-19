@@ -48,7 +48,6 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 .btn-google { background: #db4437; }
 .btn-secondary { background: #6c757d; }
 .btn i { font-size: 1.1em; }
-.back-link { text-decoration: none; margin-bottom: 20px; }
 
 /* --- TELA INICIAL --- */
 #initial-screen h2 { font-family: var(--font-family-quote); font-weight: 600; font-size: 1.5rem; margin: 2rem 0; color: #555; line-height: 1.6; }
@@ -62,9 +61,6 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 .group-item:hover { background-color: #eef5ff; }
 .group-item span { font-weight: 600; }
 .group-item .member-count { font-size: 0.9rem; color: #6c757d; }
-#group-play-notification { background-color: #fffde7; color: #fbc02d; border: 1px solid var(--accent-color); padding: 10px; border-radius: 8px; margin-bottom: 1rem; font-weight: 600; }
-#group-play-notification p { margin: 0; color: var(--dark-color); }
-#individual-quiz-card.group-mode { border: 2px solid var(--accent-color); box-shadow: 0 0 20px rgba(253, 216, 53, 0.5); }
 
 /* --- QUIZ --- */
 #quiz-progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin-bottom: 1rem; }
@@ -95,16 +91,16 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 .btn-small { padding: 8px 16px; font-size: 0.8rem; }
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
 .modal.visible { opacity: 1; pointer-events: auto; }
-.modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
+.modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
 .modal.visible .modal-content { transform: scale(1); }
 .modal-content h3 { margin-bottom: 15px; }
 .modal-content input, .modal-content textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 15px; font-family: var(--font-family-body); }
-.profile-stats h3, .profile-achievements h3, .profile-settings h3 { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; display: inline-block; }
+.profile-stats h3, .profile-achievements h3 { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; display: inline-block; }
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; text-align: center; }
 .stat-card { background-color: var(--gray-color); padding: 20px; border-radius: 10px; }
 .stat-card h4 { font-size: 0.9rem; color: #6c757d; margin-bottom: 5px; }
 .stat-card p { font-size: 2rem; font-weight: 700; color: var(--primary-color); }
-.achievements-grid { display: grid; grid-template-columns: 1fr; gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px; }
+.achievements-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
 .achievement-badge { display: flex; align-items: center; background: linear-gradient(to right, #ffffff, #f1f8e9); border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; transition: transform 0.2s, box-shadow 0.2s; }
 .achievement-badge:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
 .achievement-icon { font-size: 2.5rem; margin-right: 20px; filter: grayscale(0); }
@@ -113,7 +109,6 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 .achievement-badge.locked .achievement-info p { color: #aaa; }
 .achievement-info h4 { margin: 0; font-size: 1.1rem; }
 .achievement-info p { margin: 0; font-size: 0.9rem; color: #6c757d; }
-.settings-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; background-color: var(--gray-color); }
 
 /* --- PAINEL DE ADMINISTRAÇÃO --- */
 #admin-panel { max-width: 900px; text-align: left;}
@@ -133,7 +128,6 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 
 /* --- PÁGINA DE GRUPO --- */
 .group-header { text-align: center; margin-bottom: 2rem; }
-.group-header .group-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1rem; }
 .group-header h2 { font-size: 2rem; color: var(--primary-color); }
 .group-header p { font-size: 1rem; color: #6c757d; }
 .ranking-table { width: 100%; border-collapse: collapse; }
@@ -147,154 +141,5 @@ body { font-family: var(--font-family-body); background: var(--gray-color); colo
 .ranking-table .member-info img { width: 40px; height: 40px; border-radius: 50%; }
 .ranking-table .score { font-weight: 700; font-size: 1.2rem; text-align: right; }
 .group-actions { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.icon-selection { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 1rem; }
-.icon-selection i { font-size: 2rem; padding: 10px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
-.icon-selection i:hover { background-color: var(--gray-color); transform: scale(1.1); }
-.icon-selection i.selected { background-color: var(--accent-color); color: var(--primary-color); }
 
-/* --- PÁGINA DE RANKING --- */
-.ranking-header { text-align: center; margin-bottom: 2rem; }
-.table-wrapper { width: 100%; overflow-x: auto; } /* CORREÇÃO PARA MARGEM */
-
-@media (min-width: 768px) { .main-menu { grid-template-columns: 1fr 1fr 1fr; } .profile-header { flex-direction: row; text-align: left; } .stats-grid { grid-template-columns: repeat(4, 1fr); } .achievements-grid { grid-template-columns: 1fr 1fr; } .group-actions { flex-direction: row; justify-content: center; } }
-/* Adicione estas regras ao final do seu arquivo style.css */
-
-.profile-header {
-    align-items: flex-start; /* Alinha itens ao topo para melhor layout */
-}
-
-.profile-info {
-    flex-grow: 1; /* Permite que a info do perfil ocupe o espaço */
-}
-
-.profile-actions {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap; /* Garante que os botões quebrem a linha em telas pequenas */
-}
-
-.btn-small {
-    padding: 8px 15px;
-    font-size: 0.9rem;
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* Seção de Configurações do Perfil */
-.profile-settings {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
-    text-align: left;
-}
-
-.profile-settings h3 {
-    margin-bottom: 15px;
-    font-size: 1.2rem;
-    color: var(--dark-color);
-}
-
-.setting-item {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Espaço entre o checkbox e o texto */
-    padding: 10px;
-    border-radius: 8px;
-}
-
-.setting-item label {
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.setting-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.setting-description {
-    font-size: 0.9rem;
-    color: #6c757d;
-    margin-top: 5px;
-    padding-left: 5px;
-}
-
-/* Estilos do Modal (já devem existir, mas garantindo) */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 25px;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-}
-.modal-content h3 {
-    margin-bottom: 15px;
-}
-.modal-content textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-bottom: 15px;
-}
-.modal-content button {
-    margin: 5px;
-}
-
-/* Link de voltar */
-.back-link {
-    display: block;
-    text-align: left;
-    margin-bottom: 20px;
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 600;
-}
-.back-link:hover {
-    text-decoration: underline;
-}
-
-/* Grid de Estatísticas e Conquistas (ajustes para consistência) */
-.stats-grid, .achievements-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.stat-card, .achievement-badge {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-}
-
-.achievement-badge {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-.achievement-icon {
-    font-size: 2.5rem;
-}
+@media (min-width: 768px) { .main-menu { grid-template-columns: 1fr 1fr; } .profile-header { flex-direction: row; text-align: left; } .stats-grid { grid-template-columns: repeat(4, 1fr); } .achievements-grid { grid-template-columns: 1fr 1fr; } .group-actions { flex-direction: row; justify-content: center; } }
