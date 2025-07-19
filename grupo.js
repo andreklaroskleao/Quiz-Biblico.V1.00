@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, updateDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, updateDoc, deleteDoc, arrayUnion, deleteField, arrayRemove, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Elementos da UI ---
 const loadingDiv = document.getElementById('loading-group');
@@ -9,18 +9,25 @@ const notFoundDiv = document.getElementById('group-not-found');
 const groupIcon = document.getElementById('group-icon');
 const groupNameH2 = document.getElementById('group-name');
 const groupCreatorSpan = document.getElementById('group-creator');
+const groupDifficultySpan = document.getElementById('group-difficulty');
 const rankingTbody = document.getElementById('ranking-tbody');
 const groupActionsDiv = document.getElementById('group-actions');
 const editGroupModal = document.getElementById('edit-group-modal');
 const editGroupNameInput = document.getElementById('edit-group-name-input');
+const editGroupDifficultySelect = document.getElementById('edit-group-difficulty-select');
 const iconSelectionDiv = document.getElementById('icon-selection');
 const saveGroupBtn = document.getElementById('save-group-btn');
 const cancelGroupBtn = document.getElementById('cancel-group-btn');
+const groupChatSection = document.getElementById('group-chat');
+const chatMessagesDiv = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
 
 let currentUser = null;
 let groupId = null;
 let groupData = null;
 let selectedIcon = null;
+let unsubscribeChat = null;
 
 const groupIcons = [
     'fas fa-book-bible', 'fas fa-cross', 'fas fa-dove', 'fas fa-church', 
@@ -67,23 +74,42 @@ function displayGroupData() {
     if (groupIcon) groupIcon.className = `group-icon ${groupData.groupIcon || 'fas fa-users'}`;
     if (groupNameH2) groupNameH2.textContent = groupData.nomeDoGrupo;
     if (groupCreatorSpan) groupCreatorSpan.textContent = groupData.criadorNome;
+    if (groupDifficultySpan) groupDifficultySpan.textContent = groupData.difficulty || 'Não definida';
 
     const members = Object.values(groupData.membros).sort((a, b) => b.pontuacaoNoGrupo - a.pontuacaoNoGrupo);
+    const isCreator = currentUser && currentUser.uid === groupData.criadorUid;
 
     if (rankingTbody) {
         rankingTbody.innerHTML = '';
         members.forEach((member, index) => {
             const row = document.createElement('tr');
             const rankClass = `rank-${index + 1}`;
+            
+            const removeButtonHtml = isCreator && member.uid !== groupData.criadorUid
+                ? `<button class="remove-member-btn" data-uid="${member.uid}" title="Remover Membro"><i class="fas fa-times"></i></button>`
+                : '';
+
             row.innerHTML = `
                 <td class="rank ${rankClass}">${index + 1}</td>
                 <td class="member-info">
-                    <img src="${member.fotoURL || 'https://placehold.co/40x40'}" alt="Foto de ${member.nome}">
-                    <span>${member.nome}</span>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="profile-photo-container" style="width: 40px; height: 40px; padding: 2px;">
+                            <img src="${member.fotoURL || 'https://placehold.co/40x40'}" alt="Foto de ${member.nome}" style="width: 100%; height: 100%;">
+                        </div>
+                        <span>${member.nome}</span>
+                    </div>
+                    ${removeButtonHtml}
                 </td>
                 <td class="score">${member.pontuacaoNoGrupo}</td>
             `;
             rankingTbody.appendChild(row);
+        });
+
+        rankingTbody.querySelectorAll('.remove-member-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const memberUid = e.currentTarget.dataset.uid;
+                removeMember(memberUid);
+            });
         });
     }
 
@@ -102,11 +128,14 @@ function updateActionButtons() {
     const isCreator = currentUser.uid === groupData.criadorUid;
 
     if (isMember) {
+        if (groupChatSection) groupChatSection.classList.remove('hidden');
+        loadChatMessages();
+
         const playBtn = document.createElement('button');
         playBtn.className = 'btn';
         playBtn.innerHTML = '<i class="fas fa-play"></i> Jogar pelo Grupo';
         playBtn.addEventListener('click', () => {
-            window.location.href = `index.html?groupId=${groupId}`;
+            window.location.href = `index.html?groupId=${groupId}&difficulty=${groupData.difficulty}`;
         });
         groupActionsDiv.appendChild(playBtn);
 
@@ -120,6 +149,9 @@ function updateActionButtons() {
         });
         groupActionsDiv.appendChild(inviteBtn);
     } else {
+        if (groupChatSection) groupChatSection.classList.add('hidden');
+        if (unsubscribeChat) unsubscribeChat();
+
         const joinBtn = document.createElement('button');
         joinBtn.className = 'btn';
         joinBtn.innerHTML = '<i class="fas fa-user-plus"></i> Entrar no Grupo';
@@ -143,29 +175,88 @@ function updateActionButtons() {
     }
 }
 
+// --- LÓGICA DO CHAT ---
+function loadChatMessages() {
+    if (unsubscribeChat) unsubscribeChat();
+
+    const messagesRef = collection(db, 'grupos', groupId, 'mensagens');
+    const q = query(messagesRef, orderBy('timestamp'));
+
+    unsubscribeChat = onSnapshot(q, (querySnapshot) => {
+        if (chatMessagesDiv) chatMessagesDiv.innerHTML = '';
+        querySnapshot.forEach((doc) => {
+            const msg = doc.data();
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+            
+            const isMyMessage = currentUser && msg.senderUid === currentUser.uid;
+            if (isMyMessage) {
+                messageElement.classList.add('my-message');
+            }
+
+            messageElement.innerHTML = `
+                <div class="message-sender">${isMyMessage ? 'Eu' : msg.senderName}</div>
+                <div class="message-bubble">${msg.text}</div>
+            `;
+            if (chatMessagesDiv) chatMessagesDiv.appendChild(messageElement);
+        });
+        if (chatMessagesDiv) chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    });
+}
+
+if (chatForm) {
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const messageText = chatInput.value.trim();
+        if (messageText.length === 0 || !currentUser) return;
+
+        chatInput.disabled = true;
+
+        try {
+            const messagesRef = collection(db, 'grupos', groupId, 'mensagens');
+            await addDoc(messagesRef, {
+                text: messageText,
+                senderUid: currentUser.uid,
+                senderName: currentUser.displayName,
+                timestamp: serverTimestamp()
+            });
+            chatInput.value = '';
+        } catch (error) {
+            console.error("Erro ao enviar mensagem:", error);
+            alert("Não foi possível enviar a sua mensagem.");
+        } finally {
+            chatInput.disabled = false;
+            chatInput.focus();
+        }
+    });
+}
+
+// --- Outras Funções do Grupo ---
 async function joinGroup() {
     if (!currentUser || !groupData) return;
     const joinBtn = groupActionsDiv.querySelector('button');
     if (joinBtn) {
         joinBtn.disabled = true;
-        joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+        joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A entrar...';
     }
 
-    const groupRef = doc(db, 'grupos', groupId);
     const newMemberData = {
+        uid: currentUser.uid,
         nome: currentUser.displayName || "Jogador Anônimo",
         fotoURL: currentUser.photoURL || "https://placehold.co/40x40",
         pontuacaoNoGrupo: 0
     };
 
     try {
+        const userRef = doc(db, 'usuarios', currentUser.uid);
+        await updateDoc(userRef, { conquistas: arrayUnion('socializador') });
+
+        const groupRef = doc(db, 'grupos', groupId);
         await updateDoc(groupRef, {
             [`membros.${currentUser.uid}`]: newMemberData,
             memberUIDs: arrayUnion(currentUser.uid)
         });
         
-        // CORREÇÃO APLICADA AQUI:
-        // Atualiza o objeto local e redesenha a UI imediatamente.
         groupData.memberUIDs.push(currentUser.uid);
         groupData.membros[currentUser.uid] = newMemberData;
         displayGroupData();
@@ -180,8 +271,28 @@ async function joinGroup() {
     }
 }
 
+async function removeMember(memberUid) {
+    const memberToRemove = groupData.membros[memberUid];
+    if (!memberToRemove) return;
+
+    if (confirm(`Tem a certeza que deseja remover "${memberToRemove.nome}" do grupo?`)) {
+        try {
+            const groupRef = doc(db, 'grupos', groupId);
+            await updateDoc(groupRef, {
+                [`membros.${memberUid}`]: deleteField(),
+                memberUIDs: arrayRemove(memberUid)
+            });
+            await loadGroupData();
+        } catch (error) {
+            console.error("Erro ao remover membro:", error);
+            alert("Não foi possível remover o membro.");
+        }
+    }
+}
+
 function openEditModal() {
     if (editGroupNameInput) editGroupNameInput.value = groupData.nomeDoGrupo;
+    if (editGroupDifficultySelect) editGroupDifficultySelect.value = groupData.difficulty || 'facil';
     selectedIcon = groupData.groupIcon || 'fas fa-book-bible';
     
     if (iconSelectionDiv) {
@@ -211,19 +322,21 @@ if (cancelGroupBtn) cancelGroupBtn.addEventListener('click', () => editGroupModa
 
 if (saveGroupBtn) saveGroupBtn.addEventListener('click', async () => {
     const newName = editGroupNameInput.value.trim();
+    const newDifficulty = editGroupDifficultySelect.value;
     if (newName.length < 3) {
         alert("O nome do grupo deve ter pelo menos 3 caracteres.");
         return;
     }
 
     saveGroupBtn.disabled = true;
-    saveGroupBtn.textContent = 'Salvando...';
+    saveGroupBtn.textContent = 'A salvar...';
 
     try {
         const groupRef = doc(db, 'grupos', groupId);
         await updateDoc(groupRef, {
             nomeDoGrupo: newName,
-            groupIcon: selectedIcon
+            groupIcon: selectedIcon,
+            difficulty: newDifficulty
         });
         if (editGroupModal) editGroupModal.classList.remove('visible');
         await loadGroupData();
@@ -232,12 +345,12 @@ if (saveGroupBtn) saveGroupBtn.addEventListener('click', async () => {
         alert("Não foi possível salvar as alterações.");
     } finally {
         saveGroupBtn.disabled = false;
-        saveGroupBtn.textContent = 'Salvar';
+        saveGroupBtn.textContent = 'Salvar Alterações';
     }
 });
 
 async function deleteGroup() {
-    if (confirm(`Tem certeza que deseja excluir o grupo "${groupData.nomeDoGrupo}"? Esta ação não pode ser desfeita.`)) {
+    if (confirm(`Tem a certeza que deseja excluir o grupo "${groupData.nomeDoGrupo}"? Esta ação não pode ser desfeita.`)) {
         try {
             await deleteDoc(doc(db, 'grupos', groupId));
             alert("Grupo excluído com sucesso.");
