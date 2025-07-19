@@ -35,6 +35,10 @@
                 </div>
                 
                 <div id="main-menu" class="main-menu hidden">
+                    <div id="donate-card" class="menu-card" style="cursor: pointer; background-color: #e8f5e9;">
+                        <h3><i class="fas fa-heart"></i> Apoie o Projeto</h3>
+                        <p>Ajude a manter este ministério no ar com uma doação via PIX. Sua ajuda é muito valiosa!</p>
+                    </div>
                     <div id="individual-quiz-card" class="menu-card">
                         <h3 id="individual-quiz-title"><i class="fas fa-user"></i> Quiz Individual</h3>
                         <div id="group-play-notification" class="hidden">
@@ -234,7 +238,21 @@
             </div>
         </div>
     </div>
-
+    <div id="donate-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-donate-modal">&times;</span>
+        <h3>Apoie este Ministério</h3>
+        <p>Sua doação nos ajuda a continuar desenvolvendo e mantendo este projeto. Deus abençoe!</p>
+        
+        <img src="pix-qrcode.png" alt="QR Code PIX" style="max-width: 250px; width: 100%; border: 1px solid #ccc; padding: 10px; border-radius: 8px; margin: 1rem 0;">
+        
+        <p style="margin-top: 1rem;">Ou use a chave Copia e Cola:</p>
+        <div style="display: flex; gap: 10px; width: 100%; align-items: center; background-color: var(--gray-color); padding: 10px; border-radius: 8px;">
+            <input type="text" id="pix-key-text" value="00020126770014br.gov.bcb.pix01362fc3483c-6623-441f-8255-636b12a023bd0215Marlon de souza5204000053039865802BR5925MARLON DE SOUZA MACHADO6009SAO PAULO62070503***63048995" readonly style="border:none; background:transparent; flex-grow: 1; font-size: 0.9rem;">
+            <button id="copy-pix-key-btn" class="btn btn-small" style="padding: 8px 12px; font-size: 0.8rem;">Copiar</button>
+        </div>
+    </div>
+</div>
     <script type="module" src="app.js"></script>
 </body>
 </html>
