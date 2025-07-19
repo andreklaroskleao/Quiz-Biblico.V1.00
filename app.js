@@ -31,9 +31,9 @@ const createGroupModal = document.getElementById('create-group-modal');
 const groupNameInput = document.getElementById('group-name-input');
 const saveGroupBtn = document.getElementById('save-group-btn');
 const cancelGroupBtn = document.getElementById('cancel-group-btn');
-const groupPlayNotification = document.getElementById('group-play-notification');
-const groupPlayName = document.getElementById('group-play-name');
-const backToMenuBtn = document.getElementById('back-to-menu-btn');
+const individualQuizCard = document.getElementById('individual-quiz-card');
+const individualQuizTitle = document.getElementById('individual-quiz-title');
+const groupCompetitionCard = document.getElementById('group-competition-card');
 
 // --- Estado do Quiz ---
 let currentUser = null;
@@ -69,17 +69,15 @@ function switchScreen(newScreenId) {
     }
 }
 
-async function updateUiforGroupMode() {
-    const groupId = sessionStorage.getItem('currentGroupId');
-    if (groupId) {
-        const groupRef = doc(db, 'grupos', groupId);
-        const groupDoc = await getDoc(groupRef);
-        if (groupDoc.exists()) {
-            groupPlayName.textContent = groupDoc.data().nomeDoGrupo;
-            groupPlayNotification.classList.remove('hidden');
-        }
+function setupMainMenu(isGroupMode) {
+    if (isGroupMode) {
+        individualQuizTitle.innerHTML = '<i class="fas fa-users"></i> Iniciar Quiz de Grupo';
+        groupCompetitionCard.classList.add('hidden');
+        individualQuizCard.style.gridColumn = "1 / -1";
     } else {
-        groupPlayNotification.classList.add('hidden');
+        individualQuizTitle.innerHTML = '<i class="fas fa-user"></i> Quiz Individual';
+        groupCompetitionCard.classList.remove('hidden');
+        individualQuizCard.style.gridColumn = "auto";
     }
 }
 
@@ -88,7 +86,8 @@ loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(c
 logoutBtn.addEventListener('click', (e) => { e.preventDefault(); signOut(auth).catch(console.error); });
 
 onAuthStateChanged(auth, async (user) => {
-    await updateUiforGroupMode();
+    const isGroupMode = sessionStorage.getItem('currentGroupId') !== null;
+    setupMainMenu(isGroupMode);
 
     if (user) {
         currentUser = user;
@@ -103,7 +102,9 @@ onAuthStateChanged(auth, async (user) => {
         profileLink.classList.remove('hidden');
         await saveUserToFirestore(user);
         await checkAdminStatus(user.uid);
-        await loadUserGroups(user.uid);
+        if (!isGroupMode) {
+            await loadUserGroups(user.uid);
+        }
     } else {
         currentUser = null;
         loginBtn.classList.remove('hidden');
@@ -128,7 +129,6 @@ async function saveUserToFirestore(user) {
                 fotoURL: user.photoURL || "https://placehold.co/150x150/e0e0e0/333?text=?",
                 admin: false,
                 bio: "Novo no Quiz Bíblico!",
-                showInRanking: true,
                 stats: { pontuacaoTotal: 0, quizzesJogados: 0, respostasCertas: 0, respostasErradas: 0 },
                 conquistas: []
             });
@@ -166,7 +166,7 @@ async function loadUserGroups(uid) {
             groupElement.href = `grupo.html?id=${doc.id}`;
             groupElement.className = 'group-item';
             groupElement.innerHTML = `
-                <span><i class="${group.groupIcon || 'fas fa-users'}"></i> ${group.nomeDoGrupo}</span>
+                <span>${group.nomeDoGrupo}</span>
                 <span class="member-count">${group.memberUIDs.length} membros</span>
             `;
             groupsList.appendChild(groupElement);
@@ -198,7 +198,6 @@ saveGroupBtn.addEventListener('click', async () => {
             criadorUid: currentUser.uid,
             criadorNome: currentUser.displayName,
             dataCriacao: serverTimestamp(),
-            groupIcon: 'fas fa-book-bible',
             memberUIDs: [currentUser.uid],
             membros: {
                 [currentUser.uid]: {
@@ -220,11 +219,6 @@ saveGroupBtn.addEventListener('click', async () => {
         saveGroupBtn.disabled = false;
         saveGroupBtn.textContent = 'Criar';
     }
-});
-
-backToMenuBtn.addEventListener('click', () => {
-    sessionStorage.removeItem('currentGroupId');
-    updateUiforGroupMode();
 });
 
 // --- Lógica do Quiz ---
@@ -334,6 +328,8 @@ async function showResults() {
             await updateDoc(groupRef, {
                 [`membros.${currentUser.uid}.pontuacaoNoGrupo`]: increment(score)
             });
+            sessionStorage.removeItem('currentGroupId');
+            currentGroupId = null;
         }
 
         await checkAndAwardAchievements(userRef);
@@ -350,12 +346,21 @@ async function checkAndAwardAchievements(userRef) {
     const userAchievements = new Set(userData.conquistas || []);
     let newAchievements = [];
 
-    const stats = userData.stats;
-    if (!userAchievements.has("iniciante_da_fe") && stats.quizzesJogados >= 1) newAchievements.push("iniciante_da_fe");
-    if (!userAchievements.has("erudito_aprendiz") && stats.pontuacaoTotal >= 1000) newAchievements.push("erudito_aprendiz");
-    if (!userAchievements.has("peregrino_fiel") && stats.quizzesJogados >= 10) newAchievements.push("peregrino_fiel");
-    if (!userAchievements.has("sabio_de_israel") && stats.pontuacaoTotal >= 5000) newAchievements.push("sabio_de_israel");
-    if (!userAchievements.has("mestre_da_palavra") && stats.respostasCertas >= 100) newAchievements.push("mestre_da_palavra");
+    if (!userAchievements.has("iniciante_da_fe")) {
+        newAchievements.push("iniciante_da_fe");
+    }
+    if (userData.stats.pontuacaoTotal >= 1000 && !userAchievements.has("erudito_aprendiz")) {
+        newAchievements.push("erudito_aprendiz");
+    }
+    if (userData.stats.quizzesJogados >= 10 && !userAchievements.has("peregrino_fiel")) {
+        newAchievements.push("peregrino_fiel");
+    }
+    if (userData.stats.pontuacaoTotal >= 5000 && !userAchievements.has("sabio_de_israel")) {
+        newAchievements.push("sabio_de_israel");
+    }
+    if (userData.stats.respostasCertas >= 100 && !userAchievements.has("mestre_da_palavra")) {
+        newAchievements.push("mestre_da_palavra");
+    }
 
     if (newAchievements.length > 0) {
         await updateDoc(userRef, { conquistas: arrayUnion(...newAchievements) });
@@ -366,6 +371,6 @@ async function checkAndAwardAchievements(userRef) {
 }
 restartBtn.addEventListener('click', () => {
     sessionStorage.removeItem('currentGroupId');
-    updateUiforGroupMode();
+    setupMainMenu(false);
     switchScreen('initial-screen');
 });
