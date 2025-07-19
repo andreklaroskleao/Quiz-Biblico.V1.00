@@ -1,32 +1,39 @@
-// Importações do Firebase e funções do Firestore
 import { auth, db } from './firebase.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Elementos da UI (sem alterações, mas listados para contexto) ---
+// --- Elementos da UI ---
 const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn');
 const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const userPhotoImg = document.getElementById('user-photo');
 const adminLink = document.getElementById('admin-link');
-// NOVO: Adicionar uma âncora em volta da user-info para o link do perfil
-const userInfoAnchor = document.getElementById('user-info-anchor'); 
-
-const initialScreen = document.getElementById('initial-screen');
+const profileLink = document.getElementById('profile-link');
+const welcomeMessage = document.getElementById('welcome-message');
+const mainMenu = document.getElementById('main-menu');
 const difficultySelection = document.getElementById('difficulty-selection');
+const initialScreen = document.getElementById('initial-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
-
+const progressBar = document.getElementById('quiz-progress-bar');
 const questionText = document.getElementById('question-text');
 const optionsContainer = document.getElementById('options-container');
-const scoreSpan = document.getElementById('score');
 const feedback = document.getElementById('feedback');
 const reference = document.getElementById('reference');
 const nextBtn = document.getElementById('next-btn');
-
 const finalScore = document.getElementById('final-score');
-const motivationalMessage = document.getElementById('motivational-message');
 const restartBtn = document.getElementById('restart-btn');
+const groupsContainer = document.getElementById('groups-container');
+const groupsList = document.getElementById('groups-list');
+const createGroupBtn = document.getElementById('create-group-btn');
+const createGroupModal = document.getElementById('create-group-modal');
+const groupNameInput = document.getElementById('group-name-input');
+const saveGroupBtn = document.getElementById('save-group-btn');
+const cancelGroupBtn = document.getElementById('cancel-group-btn');
+const groupPlayNotification = document.getElementById('group-play-notification');
+const groupPlayName = document.getElementById('group-play-name');
+const backToMenuBtn = document.getElementById('back-to-menu-btn');
 
 // --- Estado do Quiz ---
 let currentUser = null;
@@ -34,144 +41,257 @@ let questions = [];
 let currentQuestionIndex = 0;
 let score = 0;
 let correctAnswersCount = 0;
-let wrongAnswersCount = 0;
+let currentGroupId = null;
 
-// --- Autenticação ---
-const provider = new GoogleAuthProvider();
-
-loginBtn.addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch(error => console.error("Erro no login:", error));
+// --- Inicialização ---
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const groupIdFromUrl = urlParams.get('groupId');
+    if (groupIdFromUrl) {
+        sessionStorage.setItem('currentGroupId', groupIdFromUrl);
+    }
+    if (window.history.replaceState) {
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+    }
 });
+
+// --- Funções ---
+function switchScreen(newScreenId) {
+    document.querySelectorAll('.screen').forEach(screen => {
+        if (screen && !screen.classList.contains('hidden')) {
+            screen.classList.add('hidden');
+        }
+    });
+    const screenToShow = document.getElementById(newScreenId);
+    if (screenToShow) {
+        screenToShow.classList.remove('hidden');
+    }
+}
+
+async function updateUiforGroupMode() {
+    const groupId = sessionStorage.getItem('currentGroupId');
+    if (groupPlayNotification && groupPlayName) {
+        if (groupId) {
+            const groupRef = doc(db, 'grupos', groupId);
+            const groupDoc = await getDoc(groupRef);
+            if (groupDoc.exists()) {
+                groupPlayName.textContent = groupDoc.data().nomeDoGrupo;
+                groupPlayNotification.classList.remove('hidden');
+            }
+        } else {
+            groupPlayNotification.classList.add('hidden');
+        }
+    }
+}
+
+const provider = new GoogleAuthProvider();
+if (loginBtn) loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(console.error));
+if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); signOut(auth).catch(console.error); });
 
 onAuthStateChanged(auth, async (user) => {
+    await updateUiforGroupMode();
+
     if (user) {
         currentUser = user;
-        loginBtn.classList.add('hidden');
-        userInfoDiv.classList.remove('hidden');
-        userNameSpan.textContent = user.displayName;
-        userPhotoImg.src = user.photoURL;
-        difficultySelection.classList.remove('hidden');
-        
-        // ATUALIZADO: Link para o perfil do usuário
-        if(userInfoAnchor) {
-            userInfoAnchor.href = `perfil.html?uid=${user.uid}`;
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (userInfoDiv) userInfoDiv.classList.remove('hidden');
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
+        if (mainMenu) mainMenu.classList.remove('hidden');
+        if (welcomeMessage) welcomeMessage.classList.add('hidden');
+        if (userNameSpan) userNameSpan.textContent = user.displayName;
+        if (userPhotoImg) userPhotoImg.src = user.photoURL;
+        if (profileLink) {
+            profileLink.href = `perfil.html?uid=${user.uid}`;
+            profileLink.classList.remove('hidden');
         }
-
         await saveUserToFirestore(user);
         await checkAdminStatus(user.uid);
+        await loadUserGroups(user.uid);
     } else {
         currentUser = null;
-        loginBtn.classList.remove('hidden');
-        userInfoDiv.classList.add('hidden');
-        difficultySelection.classList.add('hidden');
-        adminLink.classList.add('hidden');
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (userInfoDiv) userInfoDiv.classList.add('hidden');
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+        if (mainMenu) mainMenu.classList.add('hidden');
+        if (welcomeMessage) welcomeMessage.classList.remove('hidden');
+        if (adminLink) adminLink.classList.add('hidden');
+        if (profileLink) profileLink.classList.add('hidden');
     }
 });
 
-// ATUALIZADO: Salva o usuário com a nova estrutura de dados
 async function saveUserToFirestore(user) {
     const userRef = doc(db, 'usuarios', user.uid);
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) {
-        await setDoc(userRef, {
-            uid: user.uid,
-            nome: user.displayName,
-            email: user.email,
-            fotoURL: user.photoURL,
-            admin: false,
-            bio: "Novo no Quiz Bíblico!",
-            stats: {
-                pontuacaoTotal: 0,
-                quizzesJogados: 0,
-                respostasCertas: 0,
-                respostasErradas: 0
-            },
-            conquistas: []
-        });
-    } else {
-        // Garante que a foto do Google esteja sempre atualizada
-        await updateDoc(userRef, {
-            fotoURL: user.photoURL,
-            nome: user.displayName
-        });
+    try {
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                nome: user.displayName || "Jogador Anônimo",
+                email: user.email,
+                fotoURL: user.photoURL || "https://placehold.co/150x150/e0e0e0/333?text=?",
+                admin: false,
+                bio: "Novo no Quiz Bíblico!",
+                showInRanking: true,
+                stats: { pontuacaoTotal: 0, quizzesJogados: 0, respostasCertas: 0, respostasErradas: 0 },
+                conquistas: []
+            });
+        } else {
+            const updateData = {};
+            if (user.displayName) updateData.nome = user.displayName;
+            if (user.photoURL) updateData.fotoURL = user.photoURL;
+            if (Object.keys(updateData).length > 0) {
+                await setDoc(userRef, updateData, { merge: true });
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao salvar usuário no Firestore:", error);
     }
 }
-
 async function checkAdminStatus(uid) {
+    if (!adminLink) return;
     const userRef = doc(db, 'usuarios', uid);
     const userDoc = await getDoc(userRef);
-    if (userDoc.exists() && userDoc.data().admin === true) {
-        adminLink.classList.remove('hidden');
-    }
+    adminLink.classList.toggle('hidden', !(userDoc.exists() && userDoc.data().admin === true));
 }
 
+// --- Lógica de Grupos ---
+async function loadUserGroups(uid) {
+    if (!groupsList) return;
+    groupsList.innerHTML = '<p>Carregando...</p>';
+    const q = query(collection(db, "grupos"), where("memberUIDs", "array-contains", uid));
+    try {
+        const querySnapshot = await getDocs(q);
+        groupsList.innerHTML = '';
+        if (querySnapshot.empty) {
+            groupsList.innerHTML = '<p>Você ainda não participa de nenhum grupo.</p>';
+        }
+        querySnapshot.forEach((doc) => {
+            const group = doc.data();
+            const groupElement = document.createElement('a');
+            groupElement.href = `grupo.html?id=${doc.id}`;
+            groupElement.className = 'group-item';
+            groupElement.innerHTML = `
+                <span><i class="${group.groupIcon || 'fas fa-users'}"></i> ${group.nomeDoGrupo}</span>
+                <span class="member-count">${group.memberUIDs.length} membros</span>
+            `;
+            groupsList.appendChild(groupElement);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar grupos:", error);
+        groupsList.innerHTML = '<p>Não foi possível carregar os grupos.</p>';
+    }
+}
+if (createGroupBtn) createGroupBtn.addEventListener('click', () => createGroupModal.classList.add('visible'));
+if (cancelGroupBtn) cancelGroupBtn.addEventListener('click', () => createGroupModal.classList.remove('visible'));
+if (saveGroupBtn) saveGroupBtn.addEventListener('click', async () => {
+    const groupName = groupNameInput.value.trim();
+    if (groupName.length < 3) {
+        alert("O nome do grupo deve ter pelo menos 3 caracteres.");
+        return;
+    }
+    if (!currentUser) {
+        alert("Você precisa estar logado para criar um grupo.");
+        return;
+    }
+
+    saveGroupBtn.disabled = true;
+    saveGroupBtn.textContent = 'Criando...';
+
+    try {
+        const newGroup = {
+            nomeDoGrupo: groupName,
+            criadorUid: currentUser.uid,
+            criadorNome: currentUser.displayName,
+            dataCriacao: serverTimestamp(),
+            groupIcon: 'fas fa-book-bible',
+            memberUIDs: [currentUser.uid],
+            membros: {
+                [currentUser.uid]: {
+                    nome: currentUser.displayName,
+                    fotoURL: currentUser.photoURL,
+                    pontuacaoNoGrupo: 0
+                }
+            }
+        };
+        await addDoc(collection(db, "grupos"), newGroup);
+        alert(`Grupo "${groupName}" criado com sucesso!`);
+        groupNameInput.value = '';
+        createGroupModal.classList.remove('visible');
+        await loadUserGroups(currentUser.uid);
+    } catch (error) {
+        console.error("Erro ao criar grupo:", error);
+        alert("Não foi possível criar o grupo.");
+    } finally {
+        saveGroupBtn.disabled = false;
+        saveGroupBtn.textContent = 'Criar';
+    }
+});
+
+if (backToMenuBtn) backToMenuBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('currentGroupId');
+    updateUiforGroupMode();
+});
 
 // --- Lógica do Quiz ---
-difficultySelection.addEventListener('click', (e) => {
-    if (e.target.matches('.btn')) {
-        const difficulty = e.target.dataset.difficulty;
-        startQuiz(difficulty);
+if (difficultySelection) difficultySelection.addEventListener('click', (e) => {
+    if (e.target.matches('.btn[data-difficulty]')) {
+        startQuiz(e.target.dataset.difficulty);
     }
 });
 
 async function startQuiz(difficulty) {
-    initialScreen.classList.add('hidden');
-    quizScreen.classList.remove('hidden');
-    resultScreen.classList.add('hidden');
-    
-    // Reseta contadores
+    currentGroupId = sessionStorage.getItem('currentGroupId');
     score = 0;
     correctAnswersCount = 0;
-    wrongAnswersCount = 0;
     currentQuestionIndex = 0;
-    scoreSpan.textContent = score;
-    nextBtn.classList.add('hidden');
+    if (nextBtn) nextBtn.classList.add('hidden');
+    if (progressBar) progressBar.style.width = '0%';
 
-    await fetchQuestions(difficulty);
-    if (questions.length > 0) {
-        displayQuestion();
-    } else {
-        questionText.textContent = "Não foram encontradas perguntas para esta dificuldade.";
-    }
-}
-
-async function fetchQuestions(difficulty, count = 10) {
     try {
         const q = query(collection(db, "perguntas"), where("nivel", "==", difficulty));
         const querySnapshot = await getDocs(q);
         const allQuestions = [];
         querySnapshot.forEach(doc => allQuestions.push({ id: doc.id, ...doc.data() }));
-        questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, count);
+        questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+
+        if (questions.length > 0) {
+            switchScreen('quiz-screen');
+            displayQuestion();
+        } else {
+            alert("Não foram encontradas perguntas para esta dificuldade.");
+        }
     } catch (error) {
         console.error("Erro ao buscar perguntas: ", error);
+        alert("Ocorreu um erro ao carregar as perguntas.");
     }
 }
 
 function displayQuestion() {
-    feedback.textContent = '';
-    reference.textContent = '';
-    nextBtn.classList.add('hidden');
-    optionsContainer.innerHTML = '';
-    
     if (currentQuestionIndex >= questions.length) {
         showResults();
         return;
     }
+    const progress = (currentQuestionIndex / questions.length) * 100;
+    if (progressBar) progressBar.style.width = `${progress}%`;
 
-    const question = questions[currentQuestionIndex];
-    questionText.textContent = question.enunciado;
+    if (questionText) questionText.textContent = questions[currentQuestionIndex].enunciado;
+    if (optionsContainer) optionsContainer.innerHTML = '';
+    if (feedback) feedback.innerHTML = '';
+    if (reference) reference.innerHTML = '';
+    if (nextBtn) nextBtn.classList.add('hidden');
 
-    question.alternativas.forEach((alt, index) => {
+    questions[currentQuestionIndex].alternativas.forEach((alt, index) => {
         const button = document.createElement('button');
         button.textContent = alt;
         button.classList.add('btn', 'option-btn');
         button.dataset.index = index;
         button.addEventListener('click', handleAnswer);
-        optionsContainer.appendChild(button);
+        if (optionsContainer) optionsContainer.appendChild(button);
     });
 }
-
 function handleAnswer(e) {
+    Array.from(optionsContainer.children).forEach(btn => btn.disabled = true);
     const selectedButton = e.target;
     const selectedIndex = parseInt(selectedButton.dataset.index);
     const question = questions[currentQuestionIndex];
@@ -179,41 +299,35 @@ function handleAnswer(e) {
 
     if (isCorrect) {
         selectedButton.classList.add('correct');
-        feedback.textContent = 'Resposta Correta!';
+        if (feedback) feedback.textContent = 'Resposta Correta!';
         score += 10;
         correctAnswersCount++;
-        scoreSpan.textContent = score;
     } else {
         selectedButton.classList.add('wrong');
-        feedback.textContent = 'Resposta Errada!';
-        wrongAnswersCount++;
+        if (feedback) feedback.textContent = 'Resposta Errada!';
         optionsContainer.children[question.correta].classList.add('correct');
     }
     
-    reference.textContent = `Referência: ${question.referencia}`;
-    Array.from(optionsContainer.children).forEach(btn => btn.disabled = true);
-    nextBtn.classList.remove('hidden');
+    if (reference) reference.textContent = `Referência: ${question.referencia}`;
+    if (nextBtn) nextBtn.classList.remove('hidden');
+    if (progressBar) progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
 }
-
-nextBtn.addEventListener('click', () => {
+if (nextBtn) nextBtn.addEventListener('click', () => {
     currentQuestionIndex++;
     displayQuestion();
 });
 
-// ATUALIZADO: Salva estatísticas e verifica conquistas
 async function showResults() {
-    quizScreen.classList.add('hidden');
-    resultScreen.classList.remove('hidden');
-    finalScore.textContent = score;
-    
-    motivationalMessage.textContent = '"Combati o bom combate, acabei a carreira, guardei a fé." - 2 Timóteo 4:7';
+    switchScreen('result-screen');
+    if (finalScore) finalScore.textContent = score;
+    const motivationalMessage = document.getElementById('motivational-message');
+    if (motivationalMessage) motivationalMessage.textContent = '"Combati o bom combate, acabei a carreira, guardei a fé." - 2 Timóteo 4:7';
 
     if (!currentUser) return;
-
     try {
         const userRef = doc(db, 'usuarios', currentUser.uid);
+        const wrongAnswersCount = questions.length - correctAnswersCount;
         
-        // Atualiza estatísticas
         await updateDoc(userRef, {
             "stats.pontuacaoTotal": increment(score),
             "stats.quizzesJogados": increment(1),
@@ -221,11 +335,16 @@ async function showResults() {
             "stats.respostasErradas": increment(wrongAnswersCount)
         });
 
-        // Verifica conquistas
-        await checkAndAwardAchievements(userRef);
+        if (currentGroupId) {
+            const groupRef = doc(db, 'grupos', currentGroupId);
+            await updateDoc(groupRef, {
+                [`membros.${currentUser.uid}.pontuacaoNoGrupo`]: increment(score)
+            });
+        }
 
+        await checkAndAwardAchievements(userRef);
     } catch (error) {
-        console.error("Erro ao atualizar estatísticas do usuário:", error);
+        console.error("Erro ao atualizar estatísticas:", error);
     }
 }
 
@@ -237,31 +356,22 @@ async function checkAndAwardAchievements(userRef) {
     const userAchievements = new Set(userData.conquistas || []);
     let newAchievements = [];
 
-    // Conquista: Primeiro Quiz
-    if (!userAchievements.has("iniciante_da_fe")) {
-        newAchievements.push("iniciante_da_fe");
-    }
-
-    // Conquista: 1000 pontos
-    if (userData.stats.pontuacaoTotal >= 1000 && !userAchievements.has("erudito_aprendiz")) {
-        newAchievements.push("erudito_aprendiz");
-    }
-
-    // Conquista: 10 quizzes jogados
-    if (userData.stats.quizzesJogados >= 10 && !userAchievements.has("peregrino_fiel")) {
-        newAchievements.push("peregrino_fiel");
-    }
+    const stats = userData.stats;
+    if (!userAchievements.has("iniciante_da_fe") && stats.quizzesJogados >= 1) newAchievements.push("iniciante_da_fe");
+    if (!userAchievements.has("erudito_aprendiz") && stats.pontuacaoTotal >= 1000) newAchievements.push("erudito_aprendiz");
+    if (!userAchievements.has("peregrino_fiel") && stats.quizzesJogados >= 10) newAchievements.push("peregrino_fiel");
+    if (!userAchievements.has("sabio_de_israel") && stats.pontuacaoTotal >= 5000) newAchievements.push("sabio_de_israel");
+    if (!userAchievements.has("mestre_da_palavra") && stats.respostasCertas >= 100) newAchievements.push("mestre_da_palavra");
 
     if (newAchievements.length > 0) {
-        await updateDoc(userRef, {
-            conquistas: arrayUnion(...newAchievements)
-        });
-        // Opcional: mostrar um alerta/modal sobre a nova conquista
-        alert(`Parabéns! Você desbloqueou ${newAchievements.length} nova(s) conquista(s)!`);
+        await updateDoc(userRef, { conquistas: arrayUnion(...newAchievements) });
+        setTimeout(() => {
+            alert(`Parabéns! Você desbloqueou ${newAchievements.length} nova(s) conquista(s)!`);
+        }, 500);
     }
 }
-
-restartBtn.addEventListener('click', () => {
-    resultScreen.classList.add('hidden');
-    initialScreen.classList.remove('hidden');
+if (restartBtn) restartBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('currentGroupId');
+    updateUiforGroupMode();
+    switchScreen('initial-screen');
 });
