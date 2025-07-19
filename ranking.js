@@ -29,6 +29,8 @@ async function loadRanking() {
     try {
         const q = query(
             collection(db, "usuarios"), 
+            // A LINHA ABAIXO FOI ADICIONADA PARA CORRIGIR O PROBLEMA
+            where("showInRanking", "==", true),
             where(orderByField, ">", 0),
             orderBy(orderByField, "desc"), 
             limit(100)
