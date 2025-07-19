@@ -13,7 +13,9 @@
             <div id="auth-container">
                 <button id="login-btn" class="btn btn-google"><i class="fab fa-google"></i> Login</button>
                 <div id="user-info" class="user-info hidden">
-                    <img id="user-photo" src="" alt="Foto do Usuário">
+                    <div id="user-photo-border" class="profile-photo-container">
+                        <img id="user-photo" src="" alt="Foto do Utilizador">
+                    </div>
                     <div class="user-details">
                         <span id="user-name"></span>
                         <div class="user-links">
@@ -46,6 +48,10 @@
                             <button class="btn" data-difficulty="dificil">Difícil</button>
                         </div>
                     </div>
+                    <div id="competition-card" class="menu-card" style="cursor: pointer;">
+                        <h3><i class="fas fa-fist-raised"></i> Competição</h3>
+                        <p>Desafie amigos em tempo real em partidas de grupo ou 1x1 e ganhe recompensas.</p>
+                    </div>
                     <div id="group-competition-card" class="menu-card">
                         <h3><i class="fas fa-users"></i> Competição em Grupo</h3>
                         <p>Junte-se a um grupo ou crie o seu para competir com amigos!</p>
@@ -57,6 +63,10 @@
                     <div id="ranking-card" class="menu-card" style="cursor: pointer;">
                         <h3><i class="fas fa-trophy"></i> Ranking Geral</h3>
                         <p>Veja os melhores jogadores e compare a sua pontuação com a de todos os participantes.</p>
+                    </div>
+                    <div id="bible-card" class="menu-card" style="cursor: pointer;">
+                        <h3><i class="fas fa-book-open"></i> Consultar a Bíblia</h3>
+                        <p>Leia e pesquise qualquer livro ou capítulo das Sagradas Escrituras diretamente aqui.</p>
                     </div>
                 </div>
             </section>
@@ -71,7 +81,10 @@
                     <p id="feedback"></p>
                     <p id="reference"></p>
                 </div>
-                <button id="next-btn" class="btn hidden">Próxima</button>
+                <div class="quiz-actions">
+                    <button id="leave-quiz-btn" class="btn btn-secondary">Sair do Quiz</button>
+                    <button id="next-btn" class="btn hidden">Próxima</button>
+                </div>
             </section>
 
             <section id="result-screen" class="screen hidden">
@@ -88,7 +101,13 @@
         <div class="modal-content">
             <h3>Criar Novo Grupo</h3>
             <input type="text" id="group-name-input" placeholder="Nome do seu grupo" maxlength="50">
-            <button id="save-group-btn" class="btn">Criar</button>
+            <label for="group-difficulty-select" style="margin-top: 1rem; display: block;">Nível de Dificuldade Padrão</label>
+            <select id="group-difficulty-select" class="styled-select">
+                <option value="facil">Fácil</option>
+                <option value="medio">Médio</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <button id="save-group-btn" class="btn" style="margin-top: 1rem;">Criar</button>
             <button id="cancel-group-btn" class="btn btn-secondary">Cancelar</button>
         </div>
     </div>
@@ -112,6 +131,107 @@
                 </table>
             </div>
             <button id="close-ranking-btn" class="btn btn-secondary" style="margin-top: 1.5rem;">Fechar</button>
+        </div>
+    </div>
+
+    <div id="dob-modal" class="modal">
+        <div class="modal-content">
+            <h3>Bem-vindo(a)!</h3>
+            <p>Para personalizar sua experiência, por favor, informe sua data de nascimento.</p>
+            <input type="date" id="dob-input" style="width: 100%; padding: 10px; margin: 1rem 0;">
+            <button id="save-dob-btn" class="btn">Confirmar</button>
+        </div>
+    </div>
+
+    <div id="bible-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px; text-align: left;">
+            <header class="ranking-header">
+                <h2><i class="fas fa-book-open"></i> Bíblia Sagrada</h2>
+            </header>
+            <div id="bible-controls" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <select id="bible-book-select" class="styled-select" style="flex-grow: 1;"></select>
+                <select id="bible-chapter-select" class="styled-select" style="min-width: 100px;"></select>
+                <button id="load-chapter-btn" class="btn btn-small">Carregar</button>
+            </div>
+            <div id="bible-text-container" style="max-height: 50vh; overflow-y: auto; background: var(--gray-color); padding: 1rem; border-radius: 8px;">
+                <p id="bible-text-display">Selecione um livro e capítulo para começar a leitura.</p>
+            </div>
+            <button id="close-bible-btn" class="btn btn-secondary" style="margin-top: 1.5rem;">Fechar</button>
+        </div>
+    </div>
+
+    <div id="competition-lobby-modal" class="modal">
+        <div class="modal-content">
+            <h3>Modo Competição</h3>
+            <p>Crie uma sala para desafiar seus amigos ou entre em uma com um código.</p>
+            <div class="main-menu" style="grid-template-columns: 1fr; gap: 1rem;">
+                <button id="show-create-competition-btn" class="btn"><i class="fas fa-plus"></i> Criar Competição</button>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <input type="text" id="join-code-input" placeholder="Código da Sala" style="text-transform: uppercase; flex-grow: 1;">
+                    <button id="join-competition-btn" class="btn btn-secondary">Entrar</button>
+                </div>
+            </div>
+            <button id="close-lobby-btn" class="btn btn-secondary" style="margin-top: 1.5rem;">Voltar</button>
+        </div>
+    </div>
+
+    <div id="create-competition-modal" class="modal">
+        <div class="modal-content">
+            <h3>Criar Nova Competição</h3>
+            <label>Nível de Dificuldade:</label>
+            <select id="competition-difficulty-select" class="styled-select">
+                <option value="facil">Fácil</option>
+                <option value="medio">Médio</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <label style="margin-top: 1rem; display: block;">Quantidade de Perguntas:</label>
+            <select id="competition-questions-select" class="styled-select">
+                <option value="5">5 Perguntas</option>
+                <option value="10" selected>10 Perguntas</option>
+                <option value="15">15 Perguntas</option>
+            </select>
+            <label style="margin-top: 1rem; display: block;">Mínimo de Participantes:</label>
+            <input type="number" id="competition-min-players-input" class="styled-select" value="2" min="2" max="20" style="width:100%;">
+            <button id="create-competition-btn" class="btn" style="margin-top: 1.5rem;">Criar Sala</button>
+            <button id="cancel-create-competition-btn" class="btn btn-secondary">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="waiting-room-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <h3>Sala de Espera</h3>
+            <p>Compartilhe o código com seus amigos!</p>
+            <div id="invite-code-display" style="font-size: 2.5rem; font-weight: bold; letter-spacing: 5px; margin: 1rem 0; padding: 1rem; background: var(--gray-color); border-radius: 8px;">CÓDIGO</div>
+
+            <div class="waiting-room-body">
+                <div class="waiting-room-main">
+                    <h4>Escolha sua equipe:</h4>
+                    <div class="team-selection-container">
+                        <div id="team-azul" class="team-box">
+                            <h5>Equipe Azul</h5>
+                            <ul id="team-azul-list"></ul>
+                        </div>
+                        <div id="team-amarelo" class="team-box">
+                            <h5>Equipe Amarelo</h5>
+                            <ul id="team-amarelo-list"></ul>
+                        </div>
+                    </div>
+                     <p id="start-requirement-message" class="hidden" style="margin-top: 1rem; color: var(--danger-color);"></p>
+                </div>
+                <div class="waiting-room-chat">
+                    <h4>Chat da Sala</h4>
+                    <div id="chat-messages" class="chat-messages"></div>
+                    <form id="chat-form-waiting-room" class="chat-form">
+                        <input type="text" id="chat-input-waiting-room" placeholder="Digite sua mensagem...">
+                        <button type="submit" class="btn"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="waiting-room-actions">
+                <button id="start-competition-btn" class="btn hidden">Iniciar Competição</button>
+                <button id="leave-waiting-room-btn" class="btn btn-secondary">Sair da Sala</button>
+            </div>
         </div>
     </div>
 
