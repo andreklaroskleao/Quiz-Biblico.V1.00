@@ -6,8 +6,6 @@ import { doc, getDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverT
 const adminContent = document.getElementById('admin-content');
 const authGuardMessage = document.getElementById('auth-guard-message');
 const questionsTbody = document.getElementById('questions-tbody');
-
-// Formulário
 const formTitle = document.getElementById('form-title');
 const saveBtn = document.getElementById('save-question-btn');
 const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -21,8 +19,9 @@ const corretaSelect = document.getElementById('correta');
 const nivelSelect = document.getElementById('nivel');
 const temaInput = document.getElementById('tema');
 const referenciaInput = document.getElementById('referencia');
-
-// Import/Export
+const faixaCriancaCheckbox = document.getElementById('faixa-crianca');
+const faixaAdolescenteCheckbox = document.getElementById('faixa-adolescente');
+const faixaAdultoCheckbox = document.getElementById('faixa-adulto');
 const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
 const importFileInput = document.getElementById('import-file');
@@ -45,8 +44,6 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // --- Lógica CRUD ---
-
-// Carregar (Read) as perguntas
 async function loadQuestions() {
     questionsTbody.innerHTML = '<tr><td colspan="3">Carregando...</td></tr>';
     try {
@@ -59,14 +56,7 @@ async function loadQuestions() {
         querySnapshot.forEach((doc) => {
             const question = doc.data();
             const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${question.enunciado}</td>
-                <td>${question.nivel}</td>
-                <td class="actions-cell">
-                    <button class="btn edit-btn" data-id="${doc.id}">Editar</button>
-                    <button class="btn delete-btn" data-id="${doc.id}" style="background: var(--danger-color);">Excluir</button>
-                </td>
-            `;
+            row.innerHTML = `<td>${question.enunciado}</td><td>${question.nivel}</td><td class="actions-cell"><button class="btn edit-btn" data-id="${doc.id}">Editar</button><button class="btn delete-btn" data-id="${doc.id}" style="background: var(--danger-color);">Excluir</button></td>`;
             questionsTbody.appendChild(row);
         });
     } catch (error) {
@@ -75,34 +65,33 @@ async function loadQuestions() {
     }
 }
 
-// Salvar (Create/Update) pergunta
 saveBtn.addEventListener('click', async () => {
     const questionId = questionIdInput.value;
-    
+    const faixaEtaria = [];
+    if (faixaCriancaCheckbox.checked) faixaEtaria.push("crianca");
+    if (faixaAdolescenteCheckbox.checked) faixaEtaria.push("adolescente");
+    if (faixaAdultoCheckbox.checked) faixaEtaria.push("adulto");
+    if (faixaEtaria.length === 0) {
+        alert("Por favor, selecione pelo menos uma faixa etária.");
+        return;
+    }
     const questionData = {
         enunciado: enunciadoInput.value.trim(),
-        alternativas: [
-            alt1Input.value.trim(),
-            alt2Input.value.trim(),
-            alt3Input.value.trim(),
-            alt4Input.value.trim()
-        ],
+        alternativas: [alt1Input.value.trim(), alt2Input.value.trim(), alt3Input.value.trim(), alt4Input.value.trim()],
         correta: parseInt(corretaSelect.value),
         nivel: nivelSelect.value,
         tema: temaInput.value.trim().toLowerCase(),
         referencia: referenciaInput.value.trim(),
+        faixaEtaria: faixaEtaria,
         ultimaAtualizacao: serverTimestamp()
     };
-
     if (!questionData.enunciado || questionData.alternativas.some(alt => !alt)) {
         alert("Por favor, preencha todos os campos da pergunta e das alternativas.");
         return;
     }
-
     try {
         if (questionId) {
-            const questionRef = doc(db, 'perguntas', questionId);
-            await updateDoc(questionRef, questionData);
+            await updateDoc(doc(db, 'perguntas', questionId), questionData);
             alert('Pergunta atualizada com sucesso!');
         } else {
             await addDoc(collection(db, "perguntas"), questionData);
@@ -116,14 +105,11 @@ saveBtn.addEventListener('click', async () => {
     }
 });
 
-// Lidar com cliques na tabela (Editar e Excluir)
 questionsTbody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.dataset.id;
-
     if (target.classList.contains('edit-btn')) {
-        const questionRef = doc(db, 'perguntas', id);
-        const docSnap = await getDoc(questionRef);
+        const docSnap = await getDoc(doc(db, 'perguntas', id));
         if (docSnap.exists()) {
             const data = docSnap.data();
             formTitle.textContent = 'Editar Pergunta';
@@ -134,28 +120,28 @@ questionsTbody.addEventListener('click', async (e) => {
             nivelSelect.value = data.nivel;
             temaInput.value = data.tema;
             referenciaInput.value = data.referencia;
-            
+            faixaCriancaCheckbox.checked = data.faixaEtaria?.includes("crianca") || false;
+            faixaAdolescenteCheckbox.checked = data.faixaEtaria?.includes("adolescente") || false;
+            faixaAdultoCheckbox.checked = data.faixaEtaria?.includes("adulto") || false;
             saveBtn.textContent = 'Atualizar Pergunta';
             cancelBtn.classList.remove('hidden');
             window.scrollTo(0, 0);
         }
     }
-
     if (target.classList.contains('delete-btn')) {
-        if (confirm('Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita.')) {
+        if (confirm('Tem certeza que deseja excluir esta pergunta?')) {
             try {
                 await deleteDoc(doc(db, "perguntas", id));
                 alert('Pergunta excluída com sucesso!');
                 loadQuestions();
             } catch (error) {
                 console.error("Erro ao excluir pergunta:", error);
-                alert("Ocorreu um erro ao excluir a pergunta.");
+                alert("Ocorreu um erro ao excluir.");
             }
         }
     }
 });
 
-// Botão de Cancelar Edição
 cancelBtn.addEventListener('click', resetForm);
 
 function resetForm() {
@@ -170,13 +156,13 @@ function resetForm() {
     nivelSelect.value = 'facil';
     temaInput.value = '';
     referenciaInput.value = '';
+    faixaCriancaCheckbox.checked = false;
+    faixaAdolescenteCheckbox.checked = false;
+    faixaAdultoCheckbox.checked = true;
     saveBtn.textContent = 'Salvar Pergunta';
     cancelBtn.classList.add('hidden');
 }
 
-// --- IMPORTAÇÃO E EXPORTAÇÃO ---
-
-// EXPORTAR
 exportBtn.addEventListener('click', async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "perguntas"));
@@ -186,12 +172,10 @@ exportBtn.addEventListener('click', async () => {
             delete data.ultimaAtualizacao;
             perguntas.push(data);
         });
-
         if (perguntas.length === 0) {
-            alert("Nenhuma pergunta encontrada para exportar.");
+            alert("Nenhuma pergunta para exportar.");
             return;
         }
-
         const jsonString = JSON.stringify(perguntas, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -203,19 +187,17 @@ exportBtn.addEventListener('click', async () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     } catch (error) {
-        console.error("Erro ao exportar perguntas: ", error);
+        console.error("Erro ao exportar: ", error);
         alert("Ocorreu um erro ao exportar.");
     }
 });
 
-// IMPORTAR
 importBtn.addEventListener('click', () => {
     const file = importFileInput.files[0];
     if (!file) {
         alert("Por favor, selecione um arquivo JSON.");
         return;
     }
-
     const reader = new FileReader();
     reader.onload = async (event) => {
         try {
@@ -224,30 +206,28 @@ importBtn.addEventListener('click', () => {
                 alert("Arquivo JSON inválido ou vazio.");
                 return;
             }
-
             if (!confirm(`Deseja importar ${perguntas.length} perguntas?`)) return;
-
             const batch = writeBatch(db);
             const perguntasCollection = collection(db, "perguntas");
             let importedCount = 0;
-
             perguntas.forEach(pergunta => {
                 if (pergunta.enunciado && Array.isArray(pergunta.alternativas)) {
-                    const newQuestionRef = doc(perguntasCollection);
-                    batch.set(newQuestionRef, {
+                    if (!pergunta.faixaEtaria || !Array.isArray(pergunta.faixaEtaria) || pergunta.faixaEtaria.length === 0) {
+                        pergunta.faixaEtaria = ["adolescente", "adulto"];
+                    }
+                    batch.set(doc(perguntasCollection), {
                         ...pergunta,
                         ultimaAtualizacao: serverTimestamp()
                     });
                     importedCount++;
                 }
             });
-
             await batch.commit();
             alert(`${importedCount} perguntas importadas com sucesso!`);
             loadQuestions();
             importFileInput.value = '';
         } catch (error) {
-            console.error("Erro ao importar arquivo: ", error);
+            console.error("Erro ao importar: ", error);
             alert("Erro ao processar o arquivo JSON.");
         }
     };
