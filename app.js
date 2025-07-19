@@ -950,3 +950,42 @@ async function leaveWaitingRoom() {
     activeCompetitionId = null;
     if(waitingRoomModal) waitingRoomModal.classList.remove('visible');
 }
+// --- Lógica do Modal de Doação PIX ---
+const donateCard = document.getElementById('donate-card');
+const donateModal = document.getElementById('donate-modal');
+const closeDonateModalBtn = document.getElementById('close-donate-modal');
+const copyPixKeyBtn = document.getElementById('copy-pix-key-btn');
+const pixKeyText = document.getElementById('pix-key-text');
+
+if (donateCard) {
+    donateCard.addEventListener('click', () => {
+        donateModal.classList.add('visible');
+    });
+}
+
+if (closeDonateModalBtn) {
+    closeDonateModalBtn.addEventListener('click', () => {
+        donateModal.classList.remove('visible');
+    });
+}
+
+if (copyPixKeyBtn) {
+    copyPixKeyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(pixKeyText.value).then(() => {
+            copyPixKeyBtn.textContent = 'Copiado!';
+            setTimeout(() => {
+                copyPixKeyBtn.textContent = 'Copiar';
+            }, 2000);
+        }).catch(err => {
+            console.error('Erro ao copiar a chave PIX:', err);
+            alert('Não foi possível copiar a chave.');
+        });
+    });
+}
+
+// Fecha o modal se o usuário clicar fora dele
+window.addEventListener('click', (event) => {
+    if (event.target == donateModal) {
+        donateModal.classList.remove('visible');
+    }
+});
