@@ -503,24 +503,32 @@ async function showResults() {
     const motivationalMessage = document.getElementById('motivational-message');
     if (motivationalMessage) motivationalMessage.textContent = '"Combati o bom combate, acabei a carreira, guardei a fé." - 2 Timóteo 4:7';
     if (!currentUser) return;
+
     try {
         const userRef = doc(db, 'usuarios', currentUser.uid);
         const wrongAnswersCount = questions.length - correctAnswersCount;
         
         const updates = {};
-        const pontuacaoFieldName = `pontuacao${quizAtualDifficulty.charAt(0).toUpperCase() + quizAtualDifficulty.slice(1)}`;
-        const quizzesJogadosFieldName = `quizzesJogados${quizAtualDifficulty.charAt(0).toUpperCase() + quizAtualDifficulty.slice(1)}`;
-        const respostasCertasFieldName = `respostasCertas${quizAtualDifficulty.charAt(0).toUpperCase() + quizAtualDifficulty.slice(1)}`;
-        const respostasErradasFieldName = `respostasErradas${quizAtualDifficulty.charAt(0).toUpperCase() + quizAtualDifficulty.slice(1)}`;
-
+        
+        // CORREÇÃO APLICADA AQUI
+        // Nomes de campo para estatísticas totais
         updates["stats.pontuacaoTotal"] = increment(score);
         updates["stats.quizzesJogadosTotal"] = increment(1);
         updates["stats.respostasCertasTotal"] = increment(correctAnswersCount);
         updates["stats.respostasErradasTotal"] = increment(wrongAnswersCount);
-        updates[`stats.${pontuacaoFieldName}`] = increment(score);
-        updates[`stats.${quizzesJogadosFieldName}`] = increment(1);
-        updates[`stats.${respostasCertasFieldName}`] = increment(correctAnswersCount);
-        updates[`stats.${respostasErradasFieldName}`] = increment(wrongAnswersCount);
+
+        // Nomes de campo para estatísticas específicas da dificuldade atual
+        const dificuldadeCapitalizada = quizAtualDifficulty.charAt(0).toUpperCase() + quizAtualDifficulty.slice(1);
+        const pontuacaoFieldName = `stats.pontuacao${dificuldadeCapitalizada}`;
+        const quizzesJogadosFieldName = `stats.quizzesJogados${dificuldadeCapitalizada}`;
+        const respostasCertasFieldName = `stats.respostasCertas${dificuldadeCapitalizada}`;
+        const respostasErradasFieldName = `stats.respostasErradas${dificuldadeCapitalizada}`;
+
+        updates[pontuacaoFieldName] = increment(score);
+        updates[quizzesJogadosFieldName] = increment(1);
+        updates[respostasCertasFieldName] = increment(correctAnswersCount);
+        updates[respostasErradasFieldName] = increment(wrongAnswersCount);
+        // FIM DA CORREÇÃO
 
         await updateDoc(userRef, updates);
 
