@@ -501,7 +501,7 @@ async function showResults() {
     switchScreen('result-screen');
     if (finalScore) finalScore.textContent = score;
     const motivationalMessage = document.getElementById('motivational-message');
-    if (motivationalMessage) motivationalMessage.textContent = '"Combati o bom combate, acabei a carreira, guardei a fé." - 2 Timóteo 4:7';
+    if (motivationalMessage) motivationalMessage.textContent = '“Antes, crescei na graça e conhecimento de nosso Senhor e Salvador Jesus Cristo. A ele seja dada a glória, assim agora, como no dia da eternidade.” - 2 Pedro 3:18';
     if (!currentUser) return;
 
     try {
